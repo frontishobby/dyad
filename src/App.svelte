@@ -111,6 +111,11 @@
     flex-direction: column;
     height: 100vh;
     height: 100dvh;
+    /* Installed on a phone the page runs under the status bar and the home
+       indicator (viewport-fit=cover): keep every screen inside the safe area.
+       The play screen handles its own insets. */
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px)
+      env(safe-area-inset-left, 0px);
     background: var(--ground);
   }
   /* Screens fill the shell (100 % resolves against its definite height); a taller
