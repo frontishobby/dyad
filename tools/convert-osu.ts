@@ -241,7 +241,25 @@ function convertHitObjects(
   notes.sort((a, b) => a.t - b.t);
   rolls.sort((a, b) => a.t - b.t);
   spinners.sort((a, b) => a.t - b.t);
-  return { notes, rolls, spinners };
+  return { notes: mergeStacked(notes), rolls, spinners };
+}
+
+/**
+ * Notes stacked on one timestamp (a generator artefact: osu!taiko has no
+ * chords) collapse into one: the first one's type, big if any of them was.
+ * Input is sorted by t; the sort is stable, so "first" is file order.
+ */
+export function mergeStacked(notes: readonly ChartNote[]): ChartNote[] {
+  const out: ChartNote[] = [];
+  for (const n of notes) {
+    const last = out[out.length - 1];
+    if (last && last.t === n.t) {
+      if (n.big && !last.big) out[out.length - 1] = { ...last, big: true };
+      continue;
+    }
+    out.push({ ...n });
+  }
+  return out;
 }
 
 // ─── conversion ─────────────────────────────────────────────────────────────

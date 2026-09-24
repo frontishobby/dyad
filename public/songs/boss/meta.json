@@ -1,0 +1,59 @@
+{
+  "id": "boss",
+  "title": "리듬게임 보스곡",
+  "artist": "",
+  "palette": [
+    "#3B3545",
+    "#7B7486",
+    "#A598AA"
+  ],
+  "audioOffset": 0,
+  "durationMs": 172150,
+  "audio": "audio.5b614d55.webm",
+  "jacket": "jacket.188960cb.avif",
+  "jacketSm": "jacket-sm.2cdf5a3f.avif",
+  "charts": [
+    {
+      "tier": "easy",
+      "name": "Easy",
+      "file": "chart.easy.json",
+      "hash": "9b751e1561691b66e6cb6995a2679a2deccd196f9beb78496698412869f97792",
+      "od": 4,
+      "bpm": [
+        158,
+        158
+      ],
+      "notes": 1056,
+      "stars": 4.08,
+      "level": 7
+    },
+    {
+      "tier": "normal",
+      "name": "Normal",
+      "file": "chart.normal.json",
+      "hash": "79cab6c4bd73471e3d5cf94a609682b3127e720d68b7e90b963c9210aa1eaa79",
+      "od": 5,
+      "bpm": [
+        158,
+        159
+      ],
+      "notes": 1396,
+      "stars": 5.22,
+      "level": 8
+    },
+    {
+      "tier": "hard",
+      "name": "Hard",
+      "file": "chart.hard.json",
+      "hash": "d77eec90d8de74fcff61bf7fca3421cd5524d50cca4ff438ec9cb2fca284b01c",
+      "od": 6,
+      "bpm": [
+        158,
+        158
+      ],
+      "notes": 1370,
+      "stars": 5.67,
+      "level": 9
+    }
+  ]
+}

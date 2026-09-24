@@ -2,6 +2,65 @@
   "version": 1,
   "songs": [
     {
+      "id": "boss",
+      "title": "리듬게임 보스곡",
+      "artist": "",
+      "palette": [
+        "#3B3545",
+        "#7B7486",
+        "#A598AA"
+      ],
+      "audioOffset": 0,
+      "durationMs": 172150,
+      "audio": "audio.5b614d55.webm",
+      "jacket": "jacket.188960cb.avif",
+      "jacketSm": "jacket-sm.2cdf5a3f.avif",
+      "charts": [
+        {
+          "tier": "easy",
+          "name": "Easy",
+          "file": "chart.easy.json",
+          "hash": "9b751e1561691b66e6cb6995a2679a2deccd196f9beb78496698412869f97792",
+          "od": 4,
+          "bpm": [
+            158,
+            158
+          ],
+          "notes": 1056,
+          "stars": 4.08,
+          "level": 7
+        },
+        {
+          "tier": "normal",
+          "name": "Normal",
+          "file": "chart.normal.json",
+          "hash": "79cab6c4bd73471e3d5cf94a609682b3127e720d68b7e90b963c9210aa1eaa79",
+          "od": 5,
+          "bpm": [
+            158,
+            159
+          ],
+          "notes": 1396,
+          "stars": 5.22,
+          "level": 8
+        },
+        {
+          "tier": "hard",
+          "name": "Hard",
+          "file": "chart.hard.json",
+          "hash": "d77eec90d8de74fcff61bf7fca3421cd5524d50cca4ff438ec9cb2fca284b01c",
+          "od": 6,
+          "bpm": [
+            158,
+            158
+          ],
+          "notes": 1370,
+          "stars": 5.67,
+          "level": 9
+        }
+      ]
+    },
+    {
       "id": "prism",
       "title": "Prism",
       "artist": "",
@@ -34,13 +93,13 @@
           "tier": "normal",
           "name": "Normal",
           "file": "chart.normal.json",
-          "hash": "3dcbf72129fafe5f5587a3bbec753aae06634e6444b628472614ab388b083d78",
+          "hash": "020e952c236810f1dd8d2475890922ba11f021ab3d4c087b25b76e81610001da",
           "od": 5,
           "bpm": [
             169,
             172
           ],
-          "notes": 487,
+          "notes": 484,
           "stars": 3.19,
           "level": 5
         },
@@ -48,14 +107,14 @@
           "tier": "hard",
           "name": "Hard",
           "file": "chart.hard.json",
-          "hash": "2d6ff281f32810a7bbcf4298f261b9c2d69e63c7da4b3494e56e82a23e3fbf07",
+          "hash": "e5a3d694f2c7880ee40a3dbdca016f3449c43127ab59fa5f8f6f04cae8c1beb3",
           "od": 6,
           "bpm": [
             168,
             172
           ],
-          "notes": 728,
-          "stars": 4.29,
+          "notes": 727,
+          "stars": 4.26,
           "level": 7
         }
       ]

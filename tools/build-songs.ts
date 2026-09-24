@@ -254,12 +254,36 @@ async function requireFile(path: string): Promise<Uint8Array> {
 }
 
 /**
+ * Drop hit objects that repeat an earlier object's timestamp (a generator
+ * artefact: osu!taiko has no chords). The converter merges them the same way;
+ * the rating must see the same chart, or stacked notes read as infinite speed.
+ */
+export function dedupeHitObjects(osuText: string): string {
+  const marker = /^\[HitObjects\]\s*$/m;
+  const at = osuText.search(marker);
+  if (at < 0) return osuText;
+  const head = osuText.slice(0, at);
+  const body = osuText.slice(at);
+  const seen = new Set<string>();
+  const lines = body.split('\n').filter((line, i) => {
+    if (i === 0) return true;
+    const parts = line.split(',');
+    if (parts.length < 5) return true;
+    const t = parts[2]?.trim() ?? '';
+    if (seen.has(t)) return false;
+    seen.add(t);
+    return true;
+  });
+  return head + lines.join('\n');
+}
+
+/**
  * osu!taiko star rating of a .osu, from rosu-pp (the official difficulty
  * calculator ported to Rust, here through Wasm). No mods, clock rate 1.
  * Rounded to 2 decimals so meta.json is stable across float noise.
  */
 export function starsFor(osuText: string): number {
-  const map = new rosu.Beatmap(osuText);
+  const map = new rosu.Beatmap(dedupeHitObjects(osuText));
   try {
     if (map.mode !== rosu.GameMode.Taiko) map.convert(rosu.GameMode.Taiko);
     const attrs = new rosu.Difficulty({}).calculate(map);

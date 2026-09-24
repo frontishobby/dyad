@@ -126,11 +126,10 @@ describe('convertOsu — note rules', () => {
       }),
     );
     expect(chart.timing.map((p) => p.t)).toEqual([0, 4000]);
-    // equal t keeps file order: kat (clap) before don
+    // equal t merges into the first in file order: the kat (clap) survives, the don is folded into it
     expect(chart.notes).toEqual([
       { t: 0, k: 'd', big: false },
       { t: 800, k: 'k', big: false },
-      { t: 800, k: 'd', big: false },
     ]);
     expect(chart.rolls.map((r) => r.t)).toEqual([1000, 2000]);
     expect(chart.spinners.map((s) => s.t)).toEqual([5000, 6000]);
@@ -268,6 +267,24 @@ describe('convertOsu — timing and meta', () => {
     // Only short segments: everything counts rather than nothing.
     const short = await convertOsu(osu({ timing: ['0,400,4,1,0,100,1,0', '500,300,4,1,0,100,1,0', '1000,500,4,1,0,100,1,0'] }));
     expect(short.meta.bpm).toEqual([120, 120]); // the last segment alone qualifies
+  });
+
+  it('notes stacked on one timestamp merge into one (first type, big if any)', async () => {
+    const chart = await convertOsu(
+      osu({
+        objects: [
+          '256,192,0,1,0,0:0:0:0:', // don
+          '256,192,0,1,8,0:0:0:0:', // kat, same time → ignored for type
+          '256,192,0,1,4,0:0:0:0:', // finish → makes it big
+          '256,192,500,1,8,0:0:0:0:',
+          '256,192,500,1,0,0:0:0:0:',
+        ],
+      }),
+    );
+    expect(chart.notes).toEqual([
+      { t: 0, k: 'd', big: true },
+      { t: 500, k: 'k', big: false },
+    ]);
   });
 
   it('keeps the last of two uninherited points at the same time', async () => {

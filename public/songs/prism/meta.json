@@ -31,13 +31,13 @@
       "tier": "normal",
       "name": "Normal",
       "file": "chart.normal.json",
-      "hash": "3dcbf72129fafe5f5587a3bbec753aae06634e6444b628472614ab388b083d78",
+      "hash": "020e952c236810f1dd8d2475890922ba11f021ab3d4c087b25b76e81610001da",
       "od": 5,
       "bpm": [
         169,
         172
       ],
-      "notes": 487,
+      "notes": 484,
       "stars": 3.19,
       "level": 5
     },
@@ -45,14 +45,14 @@
       "tier": "hard",
       "name": "Hard",
       "file": "chart.hard.json",
-      "hash": "2d6ff281f32810a7bbcf4298f261b9c2d69e63c7da4b3494e56e82a23e3fbf07",
+      "hash": "e5a3d694f2c7880ee40a3dbdca016f3449c43127ab59fa5f8f6f04cae8c1beb3",
       "od": 6,
       "bpm": [
         168,
         172
       ],
-      "notes": 728,
-      "stars": 4.29,
+      "notes": 727,
+      "stars": 4.26,
       "level": 7
     }
   ]

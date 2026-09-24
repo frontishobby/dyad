@@ -7,7 +7,7 @@ import type { SongIndex, SongMeta } from '../../src/app/types.ts';
 import { chartHash } from '../../src/core/hash.ts';
 import type { Chart } from '../../src/core/types.ts';
 import { DARK, hexToRgb } from '../../src/design/tokens.ts';
-import { JACKET_NAMES, discoverCharts, extractPalette, findJacket, levelFor, starsFor } from '../../tools/build-songs.ts';
+import { JACKET_NAMES, dedupeHitObjects, discoverCharts, extractPalette, findJacket, levelFor, starsFor } from '../../tools/build-songs.ts';
 import { patternEvents, renderOsu } from '../../tools/gen-fixture.ts';
 import { jacketSvg, renderJacketPng } from '../../tools/gen-fixture.ts';
 import { hash8 } from '../../tools/lib/fsx.ts';
@@ -137,6 +137,17 @@ describe('committed public/songs output', () => {
     expect(levelFor(9)).toBe(10);
     expect(levelFor(0.2)).toBe(1);
     expect(levelFor(Number.NaN)).toBe(1);
+  });
+
+  it('dedupeHitObjects drops repeats of a timestamp so stacked notes cannot inflate the rating', () => {
+    const events = patternEvents();
+    const clean = renderOsu(events, 'Hard');
+    const [head, body] = clean.split('[HitObjects]\n') as [string, string];
+    const first = body.split('\n')[0] as string;
+    const stacked = `${head}[HitObjects]\n${first}\n${first}\n${body}`; // the first note three times over
+    expect(stacked).not.toBe(clean);
+    expect(starsFor(stacked)).toBe(starsFor(clean));
+    expect(dedupeHitObjects('no objects here')).toBe('no objects here');
   });
 
   it('starsFor: rosu-pp taiko star rating, deterministic, 2 decimals, higher for the denser tier', () => {

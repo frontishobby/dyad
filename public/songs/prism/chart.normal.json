@@ -130,21 +130,6 @@
       "big": false
     },
     {
-      "t": 0,
-      "k": "k",
-      "big": false
-    },
-    {
-      "t": 0,
-      "k": "k",
-      "big": false
-    },
-    {
-      "t": 0,
-      "k": "d",
-      "big": false
-    },
-    {
       "t": 115,
       "k": "d",
       "big": true
@@ -2568,5 +2553,5 @@
       "hits": 21
     }
   ],
-  "hash": "3dcbf72129fafe5f5587a3bbec753aae06634e6444b628472614ab388b083d78"
+  "hash": "020e952c236810f1dd8d2475890922ba11f021ab3d4c087b25b76e81610001da"
 }

@@ -105,6 +105,7 @@
 - `type` 비트 8 = 스피너 = 덴덴. `objectParams` 의 endTime
 - 타이밍 포인트: uninherited(beatLength > 0) 는 BPM/박자 → 마디선. inherited(음수) 는 SV → 드럼롤 길이 계산에만 사용
 - **모든 `t` 는 정수 ms.** 정렬·필드 순서 고정. 같은 `.osu` 면 바이트까지 같은 JSON
+- 같은 `t` 에 쌓인 노트(생성기 아티팩트, taiko 에 화음은 없다)는 하나로 합친다: 파일 순서상 첫 노트의 타입, 하나라도 finish 면 왕. SR 계산도 같은 규칙으로 중복을 뺀 `.osu` 를 본다
 
 ### `chart.json` 스키마
 ```ts
