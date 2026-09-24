@@ -34,7 +34,13 @@ export interface SongPlayer {
   resume(): Promise<void>;
   stop(): void;
 
-  /** (ctx.currentTime - startAt) × 1000 - audioOffset. Valid while playing/paused. */
+  /**
+   * (heardNow − startAt) × 1000 − audioOffset, where heardNow is the context
+   * time of the sound being output right now (getOutputTimestamp() projected to
+   * this instant; ctx.currentTime when that is unavailable or the context is
+   * not running). The same clock hitMs() maps events onto, so drawing, ticking
+   * and judging all run on what the player hears. Valid while playing/paused.
+   */
   songMs(): number;
 
   /**

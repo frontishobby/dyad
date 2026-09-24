@@ -187,8 +187,12 @@ Widget API 는 폴링 기반이라 수백 ms 지터, Web Audio 접근 불가, �
 const startAt = ctx.currentTime + 0.1 + leadInMs / 1000;
 source.start(startAt);
 
-// 매 프레임 (렌더용)
-const songMs = (ctx.currentTime - startAt) * 1000 - audioOffset;
+// 매 프레임 (렌더·tick 용). currentTime 이 아니라 "지금 스피커에서 나오는 소리의 컨텍스트 시각"
+// (getOutputTimestamp 를 현재로 투영) 을 쓴다. currentTime 은 출력 지연(유선 수 ms, 블루투스
+// 100~250ms)만큼 앞서 있어서, 그걸로 그리면 노트가 소리보다 먼저 판정선에 닿고 소리에 맞춰
+// 친 입력(hitMs 도 들리는 시각 기준)이 전부 이르다고 버려진다. 컨텍스트가 running 이 아니면 currentTime.
+const heardNow = contextTime + (performance.now() - performanceTime) / 1000;
+const songMs = (heardNow - startAt) * 1000 - audioOffset;
 // currentTime 은 출력 퀀텀(11~17ms) 단위로 뛰므로 그대로 그리면 노트가 덜컥거린다.
 // 렌더·HUD 는 프레임 경과 시간으로 진행하고 오디오 시계 쪽으로 매 프레임 15% 씩
 // 당겨지는 부드러운 시계(src/ui/play/smooth.ts)를 쓴다. 60ms 넘게 어긋나면 스냅.

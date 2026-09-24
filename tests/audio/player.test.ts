@@ -204,6 +204,27 @@ describe('createSongPlayer', () => {
       expect(ctx.lastSource.startedAt).toBeCloseTo(9.1 + 0.1, 9);
     });
 
+    it('runs on the heard clock: getOutputTimestamp() projected to now, never ahead of currentTime', async () => {
+      const player = await loadedPlayer(ctx);
+      ctx.currentTime = 5;
+      player.start({ audio: 0 });
+      // Output latency 200 ms: what is heard at performance 12000 was at context 7.0 while currentTime is 7.2.
+      ctx.currentTime = 7.2;
+      ctx.outputTimestamp = { contextTime: 7.0, performanceTime: 12000 };
+      vi.spyOn(performance, 'now').mockReturnValue(12100);
+      expect(player.songMs()).toBeCloseTo((7.1 - 5.1) * 1000, 9);
+      // and hitMs() of an event stamped now agrees with it
+      expect(player.hitMs(12100)).toBeCloseTo(player.songMs(), 9);
+      // A pair claiming to be ahead of currentTime is clamped to it.
+      ctx.outputTimestamp = { contextTime: 7.5, performanceTime: 12000 };
+      expect(player.songMs()).toBeCloseTo((7.2 - 5.1) * 1000, 9);
+      // While suspended the pair is stale: the frozen currentTime rules.
+      ctx.state = 'suspended';
+      ctx.outputTimestamp = { contextTime: 7.0, performanceTime: 12000 };
+      vi.spyOn(performance, 'now').mockReturnValue(99_000);
+      expect(player.songMs()).toBeCloseTo((7.2 - 5.1) * 1000, 9);
+    });
+
     it('applies a negative audio offset in the other direction', async () => {
       const player = await loadedPlayer(ctx);
       ctx.currentTime = 1;

@@ -177,7 +177,28 @@ class SongPlayerImpl implements SongPlayer {
   }
 
   songMs(): number {
-    return (this.ctx.currentTime - this.effectiveStartAt()) * 1000 - this.audioOffset;
+    return (this.heardNow() - this.effectiveStartAt()) * 1000 - this.audioOffset;
+  }
+
+  /**
+   * Context time of the sound coming out of the speaker right now: the
+   * getOutputTimestamp() pair projected to this instant. `currentTime` runs
+   * ahead of it by the output latency (a few ms wired, 100–250 ms over
+   * Bluetooth); drawing and ticking from `currentTime` would put the notes on
+   * the ring before the beat is heard, and hitMs() (also heard-based) would
+   * then call every well-timed tap early. While the context is not running
+   * the pair goes stale, so the frozen `currentTime` is used instead.
+   */
+  private heardNow(): number {
+    if (this.hasOutputTimestamp && this.ctx.state === 'running') {
+      const { contextTime, performanceTime } = this.ctx.getOutputTimestamp();
+      if (typeof contextTime === 'number' && typeof performanceTime === 'number' && performanceTime > 0) {
+        const heard = contextTime + (performance.now() - performanceTime) / 1000;
+        // Never ahead of the context clock, and never more than a second behind it (a stale pair).
+        return Math.min(this.ctx.currentTime, Math.max(this.ctx.currentTime - 1, heard));
+      }
+    }
+    return this.ctx.currentTime;
   }
 
   hitMs(timeStamp: number): number {
