@@ -1,0 +1,59 @@
+{
+  "id": "meteor-night",
+  "title": "Meteor Night",
+  "artist": "",
+  "palette": [
+    "#353755",
+    "#7678B3",
+    "#465699"
+  ],
+  "audioOffset": 0,
+  "durationMs": 152870,
+  "audio": "audio.943b7d68.webm",
+  "jacket": "jacket.161f0458.avif",
+  "jacketSm": "jacket-sm.d9807678.avif",
+  "charts": [
+    {
+      "tier": "easy",
+      "name": "Easy",
+      "file": "chart.easy.json",
+      "hash": "ed85e236d0b1ec6f2175845f971f63e4166fe80ac4c14ef57ed24f44e183bb95",
+      "od": 4,
+      "bpm": [
+        186.42,
+        186.42
+      ],
+      "notes": 474,
+      "stars": 2.26,
+      "level": 4
+    },
+    {
+      "tier": "normal",
+      "name": "Normal",
+      "file": "chart.normal.json",
+      "hash": "4b8ec34f624e6e46625bc9450f820cd80fcae22ba49388fe2bc206d3d1174840",
+      "od": 5,
+      "bpm": [
+        186.42,
+        186.42
+      ],
+      "notes": 669,
+      "stars": 3.52,
+      "level": 6
+    },
+    {
+      "tier": "hard",
+      "name": "Hard",
+      "file": "chart.hard.json",
+      "hash": "a75e346fbe5959877ef8b21276701d26c78aa6bb164635bf7a2ee07770024e96",
+      "od": 6,
+      "bpm": [
+        186.42,
+        186.42
+      ],
+      "notes": 984,
+      "stars": 4.71,
+      "level": 8
+    }
+  ]
+}
