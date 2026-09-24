@@ -136,3 +136,11 @@ export function prettyKeyCode(code: string): string {
   const words = code.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase();
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
+
+/** Clear badge shown beside a score: every note Great, or none missed. null otherwise (or nothing judged). */
+export type ClearBadge = 'ALL GREAT' | 'NO MISS';
+
+export function clearBadge(counts: { great: number; ok: number; miss: number }): ClearBadge | null {
+  if (counts.great + counts.ok === 0 || counts.miss > 0) return null;
+  return counts.ok === 0 ? 'ALL GREAT' : 'NO MISS';
+}

@@ -33,6 +33,7 @@
   import { computeFill, computeFit, type Fit } from './play/fit.ts';
   import { prettyBindings } from './play/keys.ts';
   import { PlayLoop } from './play/loop.ts';
+  import { createSmoothClock } from './play/smooth.ts';
   import {
     REDUCED_MOTION_QUERY,
     decideOrientation,
@@ -241,7 +242,6 @@
       theme: playTheme,
       layout,
       leadMs: defaultLeadMs(orientation, settings.value.hiSpeed),
-      keyLabels: orientation === 'landscape' ? prettyBindings(settings.value.bindings) : undefined,
       reducedMotion,
     });
     stage.stage.addChild(renderer.view);
@@ -281,6 +281,7 @@
       stage,
       onFinished: () => finish('chart'),
       tickLagMs: () => Math.max(0, settings.value.inputOffset + TICK_LAG_FRAME_MS),
+      renderClock: createSmoothClock(),
     });
 
     view = { layout, durationMs: player.durationMs };

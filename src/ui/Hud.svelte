@@ -168,6 +168,15 @@
     background: var(--raised);
     object-fit: cover;
   }
+  /* Portrait: the info strip is 112 px, so the jacket must fit under the 28 px padding and over the progress bar. */
+  .hud.portrait .jacket {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px; /* 64 / 8 */
+  }
+  .hud.portrait .titles {
+    padding-top: 4px;
+  }
   /* Landscape: the band sits low (DESIGN §4), so the jacket gets the room above it. */
   .hud:not(.portrait) .jacket {
     width: 240px;

@@ -90,7 +90,7 @@ function fakeEngine(trace: string[]) {
 }
 
 function manualScheduler() {
-  const queue = new Map<number, () => void>();
+  const queue = new Map<number, (frameTimeMs?: number) => void>();
   let id = 0;
   const scheduler: FrameScheduler = {
     request: (cb) => {
@@ -106,10 +106,10 @@ function manualScheduler() {
     scheduler,
     pending: () => queue.size,
     /** Run every frame callback queued so far (not ones queued while running). */
-    flush: () => {
+    flush: (frameTimeMs?: number) => {
       const cbs = [...queue.values()];
       queue.clear();
-      for (const cb of cbs) cb();
+      for (const cb of cbs) cb(frameTimeMs);
     },
   };
 }
@@ -219,6 +219,44 @@ describe('PlayLoop', () => {
     lag = Number.NaN;
     loop.step();
     expect(eng.ticks).toEqual([4960, 5000, 5000, 5000]);
+  });
+
+  it('renderClock: the renderer and HUD draw the smoothed clock, the engine ticks on the raw one, reset on start', () => {
+    const h = harness();
+    const eng = h.eng;
+    const seen: { raw: number; frame: number }[] = [];
+    let resets = 0;
+    const frames: number[] = [];
+    const hudMs: number[] = [];
+    const sched = manualScheduler();
+    const loop = new PlayLoop({
+      player: { syncClock() {}, songMs: () => 5000 },
+      engine: eng.engine,
+      renderer: { apply() {}, frame: (ms) => frames.push(ms) },
+      hud: { frame: (ms) => hudMs.push(ms), noteEvents() {} },
+      stage: { render() {} },
+      scheduler: sched.scheduler,
+      renderClock: {
+        next: (raw, frame) => {
+          seen.push({ raw, frame });
+          return raw + 7; // whatever the smoother says goes to the drawing side only
+        },
+        reset: () => {
+          resets++;
+        },
+      },
+    });
+    loop.step(123);
+    expect(seen).toEqual([{ raw: 5000, frame: 123 }]);
+    expect(frames).toEqual([5007]);
+    expect(hudMs).toEqual([5007]);
+    expect(eng.ticks).toEqual([5000]);
+    // The scheduler's frame timestamp reaches the clock; start() resets it.
+    loop.start();
+    expect(resets).toBe(1);
+    sched.flush(456);
+    expect(seen[1]).toEqual({ raw: 5000, frame: 456 });
+    loop.stop();
   });
 
   it('applies tick events to the renderer and the HUD before drawing, only when there are any', () => {

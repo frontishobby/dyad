@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { cubicOut } from 'svelte/easing';
   import { Tween } from 'svelte/motion';
-  import { formatAccuracy, formatScore } from '../app/format.ts';
+  import { clearBadge, formatAccuracy, formatScore } from '../app/format.ts';
   import { screen } from '../app/screen.svelte.ts';
   import { loadChart, songUrl } from '../app/songs.ts';
   import type { SongChartRef, SongMeta } from '../app/types.ts';
@@ -45,6 +45,7 @@
   );
 
   const accuracy = $derived(formatAccuracy(result.accuracy));
+  const badge = $derived(clearBadge(result.counts));
 
   /** The record to compare against, when it is not this very play. */
   const otherBest = $derived(best && best.createdAt !== result.createdAt ? best : null);
@@ -115,6 +116,9 @@
           </span>
           {#if isNewBest}
             <span class="new-best">신기록</span>
+          {/if}
+          {#if badge}
+            <span class="badge" class:all-great={badge === 'ALL GREAT'}>{badge}</span>
           {/if}
         </div>
         <p class="accuracy display rise" style:--i="1" aria-label="정확도 {accuracy}">{accuracy}</p>
@@ -284,6 +288,12 @@
     gap: 16px;
   }
 
+  /* The score box is right-aligned to a 7-digit width for the song list; here it hugs the left edge. */
+  .score-line :global(.score) {
+    min-width: 0;
+    text-align: left;
+  }
+
   /* The only place two colours meet (DESIGN §5): accuracy in amber ink, new best in periwinkle ink. */
   .new-best {
     font-family: var(--font-display, sans-serif);
@@ -292,6 +302,20 @@
     color: var(--kat-ink);
     /* Lands when the count-up ends. */
     animation: pop-in 360ms var(--count-ms) cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+  }
+
+  /* ALL GREAT bright, NO MISS dim (DESIGN §1: brightness is the judgement scale). Lands with the new-best mark. */
+  .badge {
+    font-family: var(--font-display, sans-serif);
+    font-weight: 500;
+    font-size: 20px;
+    letter-spacing: 0.02em;
+    color: var(--text-dim);
+    animation: pop-in 360ms calc(var(--count-ms) + 80ms) cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+  }
+
+  .badge.all-great {
+    color: var(--text);
   }
 
   @keyframes pop-in {

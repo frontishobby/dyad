@@ -25,7 +25,7 @@
     stepTier,
     swipeDirection,
   } from '../app/carousel.ts';
-  import { formatBpm, formatDuration } from '../app/format.ts';
+  import { clearBadge, formatBpm, formatDuration } from '../app/format.ts';
   import { screen } from '../app/screen.svelte.ts';
   import { loadSongIndex, songUrl } from '../app/songs.ts';
   import { TIERS, type SongChartRef, type SongMeta, type Tier } from '../app/types.ts';
@@ -305,7 +305,15 @@
 
       <div class="record">
         <span class="dim caption">{best ? '최고 기록' : '기록 없음'}</span>
-        <Score value={best?.score ?? null} size="combo" />
+        <div class="record-line">
+          <Score value={best?.score ?? null} size="combo" />
+          {#if best}
+            {@const badge = clearBadge(best.counts)}
+            {#if badge}
+              <span class="badge" class:all-great={badge === 'ALL GREAT'}>{badge}</span>
+            {/if}
+          {/if}
+        </div>
       </div>
     </div>
 
@@ -506,6 +514,26 @@
   }
   .record :global(.score) {
     min-width: 0;
+  }
+
+  .record-line {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  /* Clear badge beside the best score: ALL GREAT bright, NO MISS dim. */
+  .badge {
+    font-family: var(--font-display, sans-serif);
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .badge.all-great {
+    color: var(--text);
   }
 
   /* ── footer ───────────────────────────────────────────────────────────── */

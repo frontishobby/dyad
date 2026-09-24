@@ -187,6 +187,10 @@ source.start(startAt);
 
 // 매 프레임 (렌더용)
 const songMs = (ctx.currentTime - startAt) * 1000 - audioOffset;
+// currentTime 은 출력 퀀텀(11~17ms) 단위로 뛰므로 그대로 그리면 노트가 덜컥거린다.
+// 렌더·HUD 는 프레임 경과 시간으로 진행하고 오디오 시계 쪽으로 매 프레임 15% 씩
+// 당겨지는 부드러운 시계(src/ui/play/smooth.ts)를 쓴다. 60ms 넘게 어긋나면 스냅.
+// 엔진 tick 과 판정은 언제나 원본 오디오 시계.
 
 // 입력: 이벤트 timeStamp(performance 기준) → 오디오 시계
 const { contextTime, performanceTime } = ctx.getOutputTimestamp();

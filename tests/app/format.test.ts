@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  clearBadge,
   formatBpm, formatDuration, tierFromName, tierLabel,
   formatAccuracy,
   formatHiSpeed,
@@ -95,5 +96,15 @@ describe('prettyKeyCode', () => {
   it('sentence-cases unknown camel-case codes', () => {
     expect(prettyKeyCode('LaunchApplication1')).toBe('Launch application1');
     expect(prettyKeyCode('')).toBe('—');
+  });
+});
+
+describe('clearBadge', () => {
+  it('ALL GREAT when every note is Great, NO MISS when none missed, otherwise nothing', () => {
+    expect(clearBadge({ great: 10, ok: 0, miss: 0 })).toBe('ALL GREAT');
+    expect(clearBadge({ great: 9, ok: 1, miss: 0 })).toBe('NO MISS');
+    expect(clearBadge({ great: 0, ok: 5, miss: 0 })).toBe('NO MISS');
+    expect(clearBadge({ great: 9, ok: 0, miss: 1 })).toBeNull();
+    expect(clearBadge({ great: 0, ok: 0, miss: 0 })).toBeNull();
   });
 });

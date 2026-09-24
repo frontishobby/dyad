@@ -101,7 +101,8 @@ function portraitLayout(logical: Logical): Layout {
   const gate: Rect = { x: sideGutter, y: katRowY, w: W, h: N * 2 + gap };
   const seamY = donRowY - gap / 2;
 
-  const track: Rect = { x: sideGutter, y: infoH, w: W, h: katRowY - infoH };
+  // The band runs through the seam to the gate's near edge: no cells are drawn, only the judgement line.
+  const track: Rect = { x: sideGutter, y: infoH, w: W, h: gateNear - infoH };
   const info: Rect = { x: 0, y: 0, w: lw, h: infoH };
 
   // Touch zones: 2×2, KL/KR top row, DL/DR bottom row.
@@ -231,9 +232,9 @@ export function screenToLocal(layout: Layout, x: number, y: number, out?: { p: n
 }
 
 /**
- * p of the track rectangle's near edge. Portrait: the track stops at the kat
- * row, before the seam (positive). Landscape: the track runs to the screen
- * edge past the gate (negative).
+ * p of the track rectangle's near edge (negative: past the seam). Portrait:
+ * the band ends at the gate's near edge, just above the touch area.
+ * Landscape: it runs to the screen edge.
  */
 export function trackNearPx(layout: Layout): number {
   if (layout.orientation === 'portrait') {

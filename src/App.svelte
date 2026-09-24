@@ -104,13 +104,20 @@
     color: var(--text);
   }
 
+  /* Portrait: a column as tall as the viewport whose one screen stretches to fill it
+     (a percentage min-height would not resolve against #app's min-height). */
   .shell {
-    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
     background: var(--ground);
   }
-  /* Percentage heights inside the frame and the shell resolve against these. */
-  .frame > :global(*),
   .shell > :global(*) {
+    flex: 1 0 auto;
+  }
+  /* Percentage heights inside the frame resolve against its fixed height. */
+  .frame > :global(*) {
     min-height: 100%;
   }
 </style>

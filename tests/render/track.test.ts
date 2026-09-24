@@ -66,11 +66,10 @@ function visibleLines(view: Container): Graphics[] {
   return lineLayer.children.filter((c) => c.visible) as Graphics[];
 }
 
-function gateLit(view: Container): Graphics[] {
+/** The judgement line's flash overlay (gate layer: line, flash, then the ghosts). */
+function seamFlash(view: Container): Graphics {
   const world = byLabel(view, 'world');
-  const gateLayer = world.children[2] as Container;
-  // children alternate base, lit per cell
-  return [1, 3, 5, 7].map((i) => gateLayer.children[i] as Graphics);
+  return (world.children[2] as Container).children[1] as Graphics;
 }
 
 function hudTexts(view: Container): Text[] {
@@ -80,12 +79,12 @@ function hudTexts(view: Container): Text[] {
   return out;
 }
 
-function make(orientation: Orientation, notes: Chart['notes'], extra: { reducedMotion?: boolean; keyLabels?: Record<Key, string> } = {}) {
+function make(orientation: Orientation, notes: Chart['notes'], extra: { reducedMotion?: boolean } = {}) {
   const c = chart(notes);
   const engine = new FakeEngine(c);
   const layout = computeLayout(orientation);
   const leadMs = 750;
-  const renderer = createTrackRenderer({ chart: c, theme: DARK, layout, leadMs, reducedMotion: extra.reducedMotion ?? false, keyLabels: extra.keyLabels });
+  const renderer = createTrackRenderer({ chart: c, theme: DARK, layout, leadMs, reducedMotion: extra.reducedMotion ?? false });
   return { c, engine, layout, leadMs, renderer };
 }
 
@@ -148,8 +147,8 @@ describe('createTrackRenderer', () => {
     renderer.frame(1000 + travelMs + 1, engine);
     vis = visibleNotes(renderer.view);
     expect(vis).toHaveLength(0);
-    // Miss lights no gate cell.
-    for (const lit of gateLit(renderer.view)) expect(lit.visible).toBe(false);
+    // Miss lights nothing: the line's flash stays off.
+    expect(seamFlash(renderer.view).visible).toBe(false);
     renderer.destroy();
   });
 
@@ -167,10 +166,10 @@ describe('createTrackRenderer', () => {
     expect(g.y).toBeCloseTo(SHAPE.hitPush * layout.N * 0.5, 9);
     renderer.frame(1000 + MOTION.hitVanish, engine);
     expect(visibleNotes(renderer.view)).toHaveLength(0);
-    // DL cell lit with the flash → don decay, DR untouched.
-    const lit = gateLit(renderer.view);
-    expect(lit[2]!.visible).toBe(true);
-    expect(lit[3]!.visible).toBe(false);
+    // The line flashed white for the Great (still decaying at hitVanish < cellDecay).
+    const flash = seamFlash(renderer.view);
+    expect(flash.visible).toBe(true);
+    expect(flash.tint).toBe(hexToNumber(DARK.flash));
     renderer.destroy();
   });
 
@@ -217,10 +216,8 @@ describe('createTrackRenderer', () => {
     renderer.apply([{ type: 'note', index: 0, judgement: 'great', deltaMs: 0, key: 'DR', big: true, strong: true }], 1020);
     renderer.frame(1020 + MOTION.hitVanish + 1, engine);
     expect(visibleNotes(renderer.view)).toHaveLength(0);
-    // Both don cells lit.
-    const lit = gateLit(renderer.view);
-    expect(lit[2]!.visible).toBe(true);
-    expect(lit[3]!.visible).toBe(true);
+    // The strong hit lit the line like any Great.
+    expect(seamFlash(renderer.view).visible).toBe(true);
     renderer.destroy();
   });
 
@@ -249,48 +246,8 @@ describe('createTrackRenderer', () => {
     renderer.destroy();
   });
 
-  it('press lights the gate cell at 40% and decays after release (portrait pad)', () => {
-    const { renderer, engine } = make('portrait', [{ t: 9000, k: 'd', big: false }]);
-    renderer.frame(100, engine);
-    renderer.press('KL', true);
-    renderer.frame(110, engine);
-    const lit = gateLit(renderer.view);
-    expect(lit[0]!.visible).toBe(true);
-    expect(lit[0]!.alpha).toBeCloseTo(0.4, 9);
-    expect(lit[0]!.tint).toBe(hexToNumber(DARK.kat));
-    expect(lit[1]!.visible).toBe(false);
-    renderer.press('KL', false);
-    renderer.frame(110 + MOTION.cellDecay / 2, engine);
-    expect(lit[0]!.visible).toBe(true);
-    expect(lit[0]!.alpha).toBeLessThan(0.4);
-    expect(lit[0]!.alpha).toBeGreaterThan(0);
-    renderer.frame(110 + MOTION.cellDecay + 1, engine);
-    expect(lit[0]!.visible).toBe(false);
-    renderer.destroy();
-  });
-
-  it('great cell: flash at first, type colour after cellDecay; OK cell: type colour at 60%', () => {
-    const { renderer, engine } = make('portrait', [{ t: 1000, k: 'k', big: false }, { t: 2000, k: 'd', big: false }]);
-    engine.set(0, { status: 'hit', judgement: 'great' });
-    renderer.apply([{ type: 'note', index: 0, judgement: 'great', deltaMs: 0, key: 'KR', big: false, strong: false }], 1000);
-    renderer.frame(1000, engine);
-    const lit = gateLit(renderer.view);
-    expect(lit[1]!.tint).toBe(hexToNumber(DARK.flash));
-    expect(lit[1]!.alpha).toBe(1);
-    renderer.frame(1000 + MOTION.cellDecay, engine);
-    expect(lit[1]!.tint).toBe(hexToNumber(DARK.kat));
-
-    engine.set(1, { status: 'hit', judgement: 'ok' });
-    renderer.apply([{ type: 'note', index: 1, judgement: 'ok', deltaMs: -60, key: 'DL', big: false, strong: false }], 1940);
-    renderer.frame(1941, engine);
-    expect(lit[2]!.visible).toBe(true);
-    expect(lit[2]!.alpha).toBeCloseTo(0.6, 9);
-    expect(lit[2]!.tint).toBe(hexToNumber(DARK.don));
-    renderer.destroy();
-  });
-
-  it('landscape: no gate cells or key labels, just a judgement line that flashes on a hit', () => {
-    const { renderer, engine, layout } = make('landscape', [{ t: 1000, k: 'd', big: false }], { keyLabels: { KL: 'R', KR: 'U', DL: 'F', DR: 'J' } });
+  it.each(['portrait', 'landscape'] as const)('%s: no gate cells, a judgement line that flashes on a hit, pressed shapes on it', (orientation) => {
+    const { renderer, engine, layout } = make(orientation, [{ t: 1000, k: 'd', big: false }]);
     expect(hudTexts(renderer.view).map((t) => t.text).sort()).toEqual(['Great', 'Miss', 'OK']);
     const world = byLabel(renderer.view, 'world');
     const gateLayer = world.children[2] as Container;
@@ -340,10 +297,10 @@ describe('createTrackRenderer', () => {
     renderer.destroy();
   });
 
-  it('judgement word shows for ~400 ms, one at a time, and key labels exist only when given', () => {
-    const { renderer, engine } = make('portrait', [{ t: 1000, k: 'd', big: false }], { keyLabels: { KL: 'R', KR: 'U', DL: 'F', DR: 'J' } });
+  it('judgement word shows for ~400 ms, one at a time', () => {
+    const { renderer, engine } = make('portrait', [{ t: 1000, k: 'd', big: false }]);
     const texts = hudTexts(renderer.view);
-    expect(texts.map((t) => t.text).sort()).toEqual(['F', 'Great', 'J', 'Miss', 'OK', 'R', 'U']);
+    expect(texts.map((t) => t.text).sort()).toEqual(['Great', 'Miss', 'OK']);
     const words = texts.filter((t) => ['Great', 'OK', 'Miss'].includes(t.text));
     renderer.frame(500, engine);
     expect(words.every((t) => !t.visible)).toBe(true);
@@ -356,10 +313,6 @@ describe('createTrackRenderer', () => {
     renderer.frame(1040 + 401, engine);
     expect(words.filter((t) => t.visible)).toHaveLength(0);
     renderer.destroy();
-
-    const noLabels = make('portrait', [{ t: 1000, k: 'd', big: false }]);
-    expect(hudTexts(noLabels.renderer.view).map((t) => t.text).sort()).toEqual(['Great', 'Miss', 'OK']);
-    noLabels.renderer.destroy();
   });
 
   it('hit burst: the note outline grows from the seam and fades over MOTION.burst; Great starts white', () => {

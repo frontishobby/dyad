@@ -148,20 +148,21 @@ describe('computeLayout portrait (720×1280)', () => {
     expect(seam).toBeLessThan(cells.DL.y);
   });
 
-  it('track spans info bottom → kat row top; leadPx = seam − track top', () => {
-    expect(bottom(L.track)).toBeCloseTo(L.gate.y, 9);
+  it('track spans info bottom → gate near edge (through the seam); leadPx = seam − track top', () => {
+    expect(bottom(L.track)).toBeCloseTo(bottom(L.gate), 9);
     expect(L.leadPx).toBeCloseTo(seamPosition(L) - L.track.y, 9);
     expect(L.leadPx).toBeCloseTo(725.5, 9);
-    expect(trackNearPx(L)).toBeCloseTo(L.N + gateGap(L) / 2, 9);
+    expect(trackNearPx(L)).toBeCloseTo(-(L.N + gateGap(L) / 2), 9);
     expect(nearClipPx(L)).toBeCloseTo(seamPosition(L) - touchAreaTop(L), 9);
     expect(nearClipPx(L)).toBeLessThan(0);
   });
 
-  it('nothing overlaps: info / track / gate / touch zones are stacked top to bottom', () => {
+  it('nothing overlaps: info / track (which holds the gate) / touch zones are stacked top to bottom', () => {
     const tz = L.touchZones;
     expect(bottom(L.info)).toBeLessThanOrEqual(L.track.y);
-    expect(bottom(L.track)).toBeLessThanOrEqual(L.gate.y);
-    if (tz) expect(bottom(L.gate)).toBeLessThan(tz.KL.y);
+    expect(L.gate.y).toBeGreaterThanOrEqual(L.track.y);
+    expect(bottom(L.gate)).toBeLessThanOrEqual(bottom(L.track));
+    if (tz) expect(bottom(L.track)).toBeLessThan(tz.KL.y);
   });
 
   it('local → screen: notes fall down; u runs left → right', () => {

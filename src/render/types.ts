@@ -42,8 +42,6 @@ export interface TrackRendererOptions {
   layout: Layout;
   /** Time from spawn edge to gate, ms. Portrait default 750, landscape 900; scaled by hiSpeed. */
   leadMs: number;
-  /** Key labels on gate cells (keyboard mode only). */
-  keyLabels?: Record<Key, string>;
   reducedMotion: boolean;
 }
 

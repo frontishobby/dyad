@@ -9,13 +9,14 @@
  *   engine.tick(songMs - lag)   misses, partner-window expiry, spinner ends (lag: see tickLagMs)
  *   renderer.apply(events)      only when tick produced events
  *   hud.noteEvents(events)      so a timed-out Miss shows a word too
- *   renderer.frame(songMs)      draw
- *   hud.frame(songMs, state)    score / combo / progress
+ *   renderer.frame(renderMs)    draw (renderMs: songMs smoothed by renderClock, see smooth.ts)
+ *   hud.frame(renderMs, state)  score / combo / progress
  *   stage.render()
  *
  * Collaborators are interfaces so the ordering is testable with fakes.
  */
 import type { Engine, EngineEvent, EngineState } from '../../core/types.ts';
+import type { RenderClock } from './smooth.ts';
 
 export interface LoopPlayer {
   syncClock(): void;
@@ -41,7 +42,8 @@ export interface LoopStage {
 }
 
 export interface FrameScheduler {
-  request(cb: () => void): number;
+  /** `cb` receives the frame's timestamp on the performance clock (rAF's argument). */
+  request(cb: (frameTimeMs?: number) => void): number;
   cancel(handle: number): void;
 }
 
@@ -66,11 +68,16 @@ export interface LoopCollaborators {
    * Rendering and the HUD keep the plain clock. Read per frame; default 0.
    */
   tickLagMs?: () => number;
+  /**
+   * Smooths the clock handed to the renderer and HUD (never to the engine).
+   * Reset on start(). Absent: they get the raw audio clock.
+   */
+  renderClock?: RenderClock;
 }
 
 function defaultScheduler(): FrameScheduler {
   return {
-    request: (cb) => requestAnimationFrame(() => cb()),
+    request: (cb) => requestAnimationFrame((t) => cb(t)),
     cancel: (handle) => cancelAnimationFrame(handle),
   };
 }
@@ -100,6 +107,7 @@ export class PlayLoop {
   start(): void {
     if (this.#running) return;
     this.#running = true;
+    this.#c.renderClock?.reset();
     this.#schedule();
   }
 
@@ -112,19 +120,20 @@ export class PlayLoop {
   }
 
   /** One frame. Public so tests (and a paused redraw) can drive it by hand. */
-  step(): void {
-    const { player, gamepad, engine, renderer, hud, stage } = this.#c;
+  step(frameTimeMs: number = performance.now()): void {
+    const { player, gamepad, engine, renderer, hud, stage, renderClock } = this.#c;
     player.syncClock();
     if (gamepad) gamepad.poll();
     const songMs = player.songMs();
     const lag = this.#c.tickLagMs?.() ?? 0;
     const events = engine.tick(Number.isFinite(lag) && lag > 0 ? songMs - lag : songMs);
+    const renderMs = renderClock ? renderClock.next(songMs, frameTimeMs) : songMs;
     if (events.length > 0) {
-      renderer.apply(events, songMs);
+      renderer.apply(events, renderMs);
       hud.noteEvents(events);
     }
-    renderer.frame(songMs, engine);
-    hud.frame(songMs, engine.state);
+    renderer.frame(renderMs, engine);
+    hud.frame(renderMs, engine.state);
     stage.render();
     this.#frames++;
     if (!this.#finishedNotified && engine.state.finished) {
@@ -137,10 +146,10 @@ export class PlayLoop {
     this.#handle = this.#scheduler.request(this.#onFrame);
   }
 
-  readonly #onFrame = (): void => {
+  readonly #onFrame = (frameTimeMs?: number): void => {
     this.#handle = null;
     if (!this.#running) return;
-    this.step();
+    this.step(frameTimeMs);
     if (this.#running) this.#schedule();
   };
 }

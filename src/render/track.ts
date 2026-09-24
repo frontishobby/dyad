@@ -2,8 +2,10 @@
  * Track renderer (PLAN §3, DESIGN §2/§4/§5). One code path for both
  * orientations: everything that scrolls or sits on the track is drawn in
  * track-local coordinates inside `world`, whose transform comes from
- * layout.localFrame(). Text (judgement, key labels) and the portrait touch
+ * layout.localFrame(). Text (judgement, spinner counts) and the portrait touch
  * zones live in `hud`, positioned in screen space so they stay upright.
+ * The gate is a judgement line in both orientations (no cells); a held key
+ * shows its shape on the line, and the touch zones themselves light on press.
  *
  * Hot path: frame() allocates nothing. Notes and beat lines are pooled
  * Graphics that share prebuilt GraphicsContexts; per-note effect state lives
@@ -13,14 +15,13 @@ import { Container, Graphics, GraphicsContext, Text, TextStyle } from 'pixi.js';
 import type { Chart, Engine, EngineEvent, Judgement, Key, NoteKind } from '../core/types.ts';
 import { keyHand, keyKind, partnerKey } from '../core/types.ts';
 import { MOTION, SHAPE, TYPE, hexToNumber, type Theme } from '../design/tokens.ts';
-import { gateCellsLocal, localFrame, localToScreen, nearClipPx, seamPosition, trackNearPx, type Vec2 } from './layout.ts';
+import { localFrame, localToScreen, nearClipPx, seamPosition, trackNearPx, type Vec2 } from './layout.ts';
 import {
   brickContext,
   buildNoteContexts,
   burstContext,
   destroyNoteContexts,
   dividerContext,
-  gateCellContext,
   instance,
   lineContext,
   rectContext,
@@ -33,7 +34,7 @@ import type { Layout, TrackRenderer, TrackRendererOptions } from './types.ts';
 
 /** Judgement word stays up this long (DESIGN §1: read in one frame, then gone). */
 const JUDGEMENT_TEXT_MS = 400;
-/** Gate cell / touch zone lit while a key is held: type colour at 40%. */
+/** Touch zone lit, and the pressed shape shown on the seam, while a key is held: type colour at 40%. */
 const PRESS_ALPHA = 0.4;
 /** OK: type colour at 60%. */
 const OK_ALPHA = 0.6;
@@ -51,7 +52,7 @@ const JUDGEMENT_P_N = 3;
 const JUDGEMENT_FONT = { portrait: 32, landscape: TYPE.size.judgement } as const;
 /** Roll / spinner bodies brighten to this tint on a tick and fall back over cellDecay. */
 const SPAN_FLASH_MS = MOTION.cellDecay;
-/** Landscape judgement line (DESIGN §4): thickness in px, and the lit overlay's thickness. */
+/** Judgement line (DESIGN §4): thickness in px, and the lit overlay's thickness. */
 const SEAM_LINE_PX = 2;
 const SEAM_LIT_PX = 6;
 /** Cap on generated beat lines (a 10-minute song at 300 BPM is 3000). */
@@ -239,12 +240,6 @@ function destroyPool(pool: RegularPool | BigPool): void {
 
 // ─── gate cells / touch zones ───────────────────────────────────────────────
 
-interface Cell {
-  base: Graphics;
-  lit: Graphics;
-  type: number;
-}
-
 interface Zone {
   base: Graphics;
   lit: Graphics;
@@ -305,7 +300,7 @@ function buildBeatLines(chart: Chart): BeatLines {
 // ─── renderer ───────────────────────────────────────────────────────────────
 
 export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
-  const { chart, theme, keyLabels, reducedMotion } = opts;
+  const { chart, theme, reducedMotion } = opts;
   let layout = opts.layout;
   let leadMs = opts.leadMs > 0 ? opts.leadMs : 750;
 
@@ -353,13 +348,9 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   const fxJudge = new Uint8Array(noteCount);
   const fxHand = new Uint8Array(noteCount);
 
-  // ─── gate cell state (index = keyIndex)
+  // ─── key state (index = keyIndex)
   const cellPressed = new Uint8Array(4);
-  const cellLit = new Uint8Array(4);
-  const cellLitAt = new Float64Array(4);
-  const cellHoldUntil = new Float64Array(4).fill(-Infinity);
-  const cellOffAt = new Float64Array(4).fill(-Infinity);
-  const cellWasLit = new Uint8Array(4);
+  /** Release time per key: touch zones and ghosts decay from it. */
   const zoneOffAt = new Float64Array(4).fill(-Infinity);
   /** Last pressed hand per note type (kindIndex) — resolves which half landed while a big note awaits its partner. */
   const lastPressHand = new Uint8Array(2);
@@ -401,20 +392,18 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   const spans: Span[] = [];
   const spanFlashAt = new Float64Array(chart.rolls.length + chart.spinners.length).fill(-Infinity);
   const spanTmp: Vec2 = { x: 0, y: 0 };
-  /** Landscape only: the judgement line and its judgement flash (no gate cells, no key labels). */
+  /** The judgement line and its judgement flash. */
   let seamLine: Graphics | null = null;
   let seamLit: Graphics | null = null;
   let seamKind = LIT_NONE;
   let seamAt = -Infinity;
   /**
-   * Landscape only: the pressed type's shape on the seam. One hand held → the
-   * regular note centred; both hands → the big note (two halves). Index = kindIndex.
+   * The pressed type's shape on the seam. One hand held → the regular note
+   * centred; both hands → the big note (two halves). Index = kindIndex.
    */
   const ghostRegular: Graphics[] = [];
   const ghostBig: [Graphics, Graphics][] = [];
-  const cells: Cell[] = [];
   const zones: Zone[] = [];
-  const labels: Text[] = [];
   const judgementTexts: Text[] = []; // index J_GREAT-1 .. J_MISS-1
 
   const lines = buildBeatLines(chart);
@@ -502,11 +491,6 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
       noteMask = null;
     }
     destroySpans();
-    for (const c of cells) {
-      c.base.destroy();
-      c.lit.destroy();
-    }
-    cells.length = 0;
     seamLine?.destroy();
     seamLit?.destroy();
     seamLine = seamLit = null;
@@ -524,8 +508,6 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
       z.silhouette.destroy();
     }
     zones.length = 0;
-    for (const l of labels) l.destroy();
-    labels.length = 0;
     for (const t of judgementTexts) t.destroy();
     judgementTexts.length = 0;
     for (const g of bursts) g.destroy();
@@ -591,10 +573,9 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     beatPool = makeRegularPool(beatCtx, lineLayer, 0);
     barPool = makeRegularPool(barCtx, lineLayer, 0);
 
-    const cellRects = gateCellsLocal(layout);
-    if (layout.orientation === 'landscape') {
-      // Landscape (keyboard / gamepad): a judgement line across the band, no
-      // pad miniature. Local y = 0 is the seam; the line spans the width axis.
+    // The gate is a judgement line across the width axis in both orientations
+    // (local y = 0 is the seam), lit white on a Great and dim on an OK.
+    {
       const lineCtx = rectContext(0, -SEAM_LINE_PX / 2, W, SEAM_LINE_PX, 0xffffff);
       const litCtx = rectContext(0, -SEAM_LIT_PX / 2, W, SEAM_LIT_PX, 0xffffff);
       staticContexts.push(lineCtx, litCtx);
@@ -623,39 +604,6 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
         ghostRegular.push(g);
         ghostBig.push([l, r]);
       });
-    } else {
-      // Portrait: four cells in local coordinates, kat row far, don row near.
-      for (const key of KEY_ORDER) {
-        const r = cellRects[key];
-        const baseCtx = gateCellContext(r.w, r.h, C.raised, C.line);
-        const litCtx = brickContext(r.w, r.h, 0xffffff);
-        staticContexts.push(baseCtx, litCtx);
-        const base = new Graphics({ context: baseCtx });
-        const lit = new Graphics({ context: litCtx });
-        base.position.set(r.x, r.y);
-        lit.position.set(r.x, r.y);
-        lit.visible = false;
-        gateLayer.addChild(base, lit);
-        cells.push({ base, lit, type: kindIndex(keyKind(key)) });
-      }
-    }
-
-    // Key labels (keyboard mode): upright, centred on each cell, in the HUD.
-    if (keyLabels && layout.orientation !== 'landscape') {
-      const style = new TextStyle({
-        fontFamily: TYPE.body,
-        fontSize: TYPE.size.keyLabel,
-        fontWeight: '500',
-        fill: C.faint,
-      });
-      for (const key of KEY_ORDER) {
-        const r = cellRects[key];
-        const centre = localToScreen(layout, -(r.y + r.h / 2), (r.x + r.w / 2) / W);
-        const text = new Text({ text: keyLabels[key], style, anchor: 0.5 });
-        text.position.set(centre.x, centre.y);
-        labelLayer.addChild(text);
-        labels.push(text);
-      }
     }
 
     // Touch zones (portrait).
@@ -829,41 +777,6 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     }
     hideUnused(beat);
     hideUnused(bar);
-  }
-
-  function litAlpha(kind: number): number {
-    return kind === LIT_GREAT ? 1 : kind === LIT_OK ? OK_ALPHA : kind === LIT_PRESS ? PRESS_ALPHA : 0;
-  }
-
-  function updateCells(songMs: number): void {
-    for (let i = 0; i < 4; i++) {
-      const cell = cells[i];
-      if (!cell) continue;
-      const lit = cellPressed[i] === 1 || songMs < (cellHoldUntil[i] as number);
-      const kind = cellLit[i] as number;
-      let alpha = 0;
-      if (lit) {
-        alpha = litAlpha(kind);
-      } else {
-        if (cellWasLit[i] === 1) cellOffAt[i] = songMs;
-        const d = (songMs - (cellOffAt[i] as number)) / MOTION.cellDecay;
-        if (d >= 1 || kind === LIT_NONE) {
-          cellLit[i] = LIT_NONE;
-        } else {
-          alpha = litAlpha(kind) * (1 - (d < 0 ? 0 : d));
-        }
-      }
-      cellWasLit[i] = lit ? 1 : 0;
-
-      const type = TYPE_COLOR[cell.type] as number;
-      let color = type;
-      if (kind === LIT_GREAT && !reducedMotion) {
-        color = lerpColor(C.flash, type, (songMs - (cellLitAt[i] as number)) / MOTION.cellDecay);
-      }
-      cell.lit.visible = alpha > 0;
-      cell.lit.alpha = alpha;
-      cell.lit.tint = color;
-    }
   }
 
   function updateZones(songMs: number): void {
@@ -1052,11 +965,8 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   }
 
   // ─── effects
-  function lightCell(key: Key, kind: number, songMs: number): void {
-    const i = keyIndex(key);
-    cellLit[i] = kind;
-    cellLitAt[i] = songMs;
-    cellHoldUntil[i] = songMs + MOTION.cellDecay;
+  /** Light the judgement line for a judgement (a stronger one wins while the previous still glows). */
+  function lightSeam(kind: number, songMs: number): void {
     if (kind > seamKind || songMs >= seamAt + MOTION.cellDecay) {
       seamKind = kind;
       seamAt = songMs;
@@ -1064,9 +974,9 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   }
 
   /**
-   * Landscape: a held type shows its shape on the seam at PRESS_ALPHA — the
-   * regular note centred for one hand, the big note for both — and the regular
-   * shape fades over cellDecay once both keys are up.
+   * A held type shows its shape on the seam at PRESS_ALPHA — the regular note
+   * centred for one hand, the big note for both — and the regular shape fades
+   * over cellDecay once both keys are up.
    */
   function updateGhosts(songMs: number): void {
     for (let kind = 0; kind < ghostRegular.length; kind++) {
@@ -1099,8 +1009,8 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   }
 
   /**
-   * Landscape judgement line: Great flashes white, OK glows dim, both decaying
-   * over cellDecay; a Miss dips the line itself for as long.
+   * Judgement line: Great flashes white, OK glows dim, both decaying over
+   * cellDecay; a Miss dips the line itself for as long.
    */
   function updateSeam(songMs: number): void {
     if (!seamLit) return;
@@ -1117,16 +1027,6 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     seamLit.visible = true;
     seamLit.alpha = (seamKind === LIT_GREAT ? 1 : 0.5) * (1 - d);
     seamLit.tint = seamKind === LIT_GREAT ? C.flash : C.textDim;
-  }
-
-  function lightRow(noteKind: NoteKind, kind: number, songMs: number): void {
-    if (noteKind === 'k') {
-      lightCell('KL', kind, songMs);
-      lightCell('KR', kind, songMs);
-    } else {
-      lightCell('DL', kind, songMs);
-      lightCell('DR', kind, songMs);
-    }
   }
 
   function litKindFor(j: number): number {
@@ -1157,27 +1057,24 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
             // First hand of a big note; the partner window is open.
             fx[i] = FX_AWAITING;
             fxAt[i] = songMs;
-            if (ev.key) {
-              fxHand[i] = keyHand(ev.key) === 'L' ? HAND_L : HAND_R;
-              lightCell(ev.key, lit, songMs);
-            }
+            if (ev.key) fxHand[i] = keyHand(ev.key) === 'L' ? HAND_L : HAND_R;
+            lightSeam(lit, songMs);
             spawnBurst(kind, false, false, BURST_ALPHA.half, songMs);
           } else {
             fx[i] = FX_HIT;
             fxAt[i] = songMs;
-            if (ev.strong && note) lightRow(note.k, lit, songMs);
-            else if (ev.key) lightCell(ev.key, lit, songMs);
+            lightSeam(lit, songMs);
             spawnBurst(kind, ev.strong, j === J_GREAT, j === J_GREAT ? BURST_ALPHA.great : BURST_ALPHA.ok, songMs);
           }
           break;
         }
         case 'roll-tick':
-          lightCell(ev.key, LIT_OK, songMs);
+          lightSeam(LIT_OK, songMs);
           flashSpan('roll', ev.index, songMs);
           spawnBurst(kindIndex(keyKind(ev.key)), false, false, BURST_ALPHA.tick, songMs);
           break;
         case 'spinner-tick': {
-          lightCell(ev.key, LIT_OK, songMs);
+          lightSeam(LIT_OK, songMs);
           flashSpan('spinner', ev.index, songMs);
           spawnBurst(kindIndex(keyKind(ev.key)), false, false, BURST_ALPHA.tick, songMs);
           const sp = spans.find((x) => x.kind === 'spinner' && x.index === ev.index);
@@ -1198,18 +1095,10 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     if (down) {
       cellPressed[i] = 1;
       lastPressHand[kindIndex(keyKind(key))] = keyHand(key) === 'L' ? HAND_L : HAND_R;
-      if (cellLit[i] === LIT_NONE) {
-        cellLit[i] = LIT_PRESS;
-        cellLitAt[i] = now;
-      }
     } else {
+      // Decay starts at the release, not at the next frame.
       if (cellPressed[i] === 1) zoneOffAt[i] = now;
       cellPressed[i] = 0;
-      // Decay starts at the release, not at the next frame — unless a judgement pulse still holds the cell.
-      if (now >= (cellHoldUntil[i] as number) && cellWasLit[i] === 1) {
-        cellOffAt[i] = now;
-        cellWasLit[i] = 0;
-      }
     }
   }
 
@@ -1241,7 +1130,6 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     placeLines(songMs);
     placeSpans(songMs);
     updateBeatPulse(songMs);
-    updateCells(songMs);
     updateSeam(songMs);
     updateGhosts(songMs);
     updateZones(songMs);
