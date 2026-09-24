@@ -61,6 +61,65 @@
       ]
     },
     {
+      "id": "neon-rain",
+      "title": "Neon Rain",
+      "artist": "",
+      "palette": [
+        "#253748",
+        "#465976",
+        "#867886"
+      ],
+      "audioOffset": 0,
+      "durationMs": 146550,
+      "audio": "audio.08891684.webm",
+      "jacket": "jacket.c96eb473.avif",
+      "jacketSm": "jacket-sm.78082781.avif",
+      "charts": [
+        {
+          "tier": "easy",
+          "name": "Easy",
+          "file": "chart.easy.json",
+          "hash": "276866ef7564e6a1eecd1897e2f81a837d708957b302361bfceadcc031170eed",
+          "od": 4,
+          "bpm": [
+            180,
+            180
+          ],
+          "notes": 379,
+          "stars": 2.36,
+          "level": 4
+        },
+        {
+          "tier": "normal",
+          "name": "Normal",
+          "file": "chart.normal.json",
+          "hash": "683320873f75c38484099c6cddb459e8d54bd923da113a42cb8edc469b584143",
+          "od": 5,
+          "bpm": [
+            180,
+            180
+          ],
+          "notes": 577,
+          "stars": 3.49,
+          "level": 6
+        },
+        {
+          "tier": "hard",
+          "name": "Hard",
+          "file": "chart.hard.json",
+          "hash": "05aeb1f73f56dced85d573687a16b626bb3559dd85e24c277221dae15f37f4dc",
+          "od": 6,
+          "bpm": [
+            180,
+            180
+          ],
+          "notes": 971,
+          "stars": 5.08,
+          "level": 8
+        }
+      ]
+    },
+    {
       "id": "prism",
       "title": "Prism",
       "artist": "",
