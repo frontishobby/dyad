@@ -128,6 +128,7 @@
   });
 
   onDestroy(() => {
+    if (playTimer !== undefined) clearTimeout(playTimer);
     if (previewTimer !== undefined) clearTimeout(previewTimer);
     preview?.destroy();
     preview = null;
@@ -153,10 +154,10 @@
     if (next) tier = next.tier;
   }
 
-  function play(): void {
+  function play(auto = false): void {
     if (!song || !chart) return;
     lastHash = chart.hash;
-    screen.go({ name: 'play', song, chart });
+    screen.go({ name: 'play', song, chart, auto });
   }
 
   function isEditable(target: EventTarget | null): boolean {
@@ -230,13 +231,34 @@
     dragPointer = null;
   }
 
+  // A tap on the centre jacket plays; a double tap plays it hands-free. The
+  // single tap waits one double-tap interval so the second tap can cancel it.
+  const DOUBLE_TAP_MS = 280;
+  let playTimer: ReturnType<typeof setTimeout> | undefined;
+
   function onJacketClick(i: number): void {
     if (swallowClick) {
       swallowClick = false;
       return;
     }
-    if (i === index) play();
-    else jumpTo(i);
+    if (i !== index) {
+      jumpTo(i);
+      return;
+    }
+    if (playTimer !== undefined) return;
+    playTimer = setTimeout(() => {
+      playTimer = undefined;
+      play();
+    }, DOUBLE_TAP_MS);
+  }
+
+  function onJacketDoubleClick(i: number): void {
+    if (i !== index) return;
+    if (playTimer !== undefined) {
+      clearTimeout(playTimer);
+      playTimer = undefined;
+    }
+    play(true);
   }
 
   function tileFor(t: Tier): SongChartRef | undefined {
@@ -295,6 +317,7 @@
           aria-selected={i === index}
           aria-label={i === index ? `${entry.title} 시작` : `${entry.title} 선택`}
           onclick={() => onJacketClick(i)}
+          ondblclick={() => onJacketDoubleClick(i)}
         >
           <Jacket src={songUrl(entry, entry.jacket)} alt="" fill />
         </button>

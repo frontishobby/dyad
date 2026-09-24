@@ -11,7 +11,7 @@ export type Screen =
   | { name: 'title' }
   | { name: 'settings' }
   | { name: 'calibrate'; returnTo: 'title' | 'settings' }
-  | { name: 'play'; song: SongMeta; chart: SongChartRef }
+  | { name: 'play'; song: SongMeta; chart: SongChartRef; auto?: boolean }
   | {
       name: 'result';
       song: SongMeta;

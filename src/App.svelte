@@ -62,7 +62,7 @@
     {:else if current.name === 'calibrate'}
       <Calibrate returnTo={current.returnTo} />
     {:else if current.name === 'play'}
-      <Play song={current.song} chart={current.chart} />
+      <Play song={current.song} chart={current.chart} auto={current.auto ?? false} />
     {:else if current.name === 'result'}
       <Result
         song={current.song}

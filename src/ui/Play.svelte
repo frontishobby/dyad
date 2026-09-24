@@ -41,15 +41,18 @@
     mediaMatches,
     readOrientationSignals,
   } from './play/orientation.ts';
+  import { buildAutoSchedule, createAutoPilot } from './play/autopilot.ts';
   import { createPressHandler } from './play/press.ts';
   import { buildPlayResult, isNewBest } from './play/result.ts';
 
   interface Props {
     song: SongMeta;
     chart: SongChartRef;
+    /** Scripted perfect play: nothing is judged from real input and nothing is recorded. */
+    auto?: boolean;
   }
 
-  let { song, chart: chartRef }: Props = $props();
+  let { song, chart: chartRef, auto = false }: Props = $props();
 
   type HudInstance = ReturnType<typeof Hud>;
 
@@ -95,7 +98,8 @@
   const difficultyText = (() => {
     const label = tierLabel(chartRef.tier);
     const name = chartRef.name.trim();
-    return name && name.toLowerCase() !== chartRef.tier ? `${label} · ${name}` : label;
+    const base = name && name.toLowerCase() !== chartRef.tier ? `${label} · ${name}` : label;
+    return auto ? `${base} · AUTO` : base;
   })();
   /** Theme is locked for the play (DESIGN §6: no theme switch mid-play). */
   const baseTheme: Theme = theme.value;
@@ -255,7 +259,8 @@
       hitSounds,
       hud: hudSink,
       inputOffset: () => settings.value.inputOffset,
-      isPlaying: () => playing,
+      // Autoplay: real presses only light the ring; the script does the hitting.
+      isPlaying: () => playing && !auto,
     });
     keyboard = createKeyboardSource(settings.value.bindings);
     keyboard.start(handler);
@@ -270,11 +275,16 @@
     }
     gamepad = createGamepadSource();
     gamepad.start(handler);
+    // Autoplay stands in the gamepad's slot of the loop: its presses land before each frame's tick.
+    const pilot = auto
+      ? createAutoPilot(buildAutoSchedule(chart), { engine, renderer, hitSounds, hud: hudSink })
+      : null;
+    const songPlayer = player;
 
     unsubEnded = player.onEnded(() => finish('ended'));
     loop = new PlayLoop({
       player,
-      gamepad,
+      gamepad: pilot ? { poll: () => pilot.poll(songPlayer.songMs()) } : gamepad,
       engine,
       renderer,
       hud: hudSink,
@@ -553,13 +563,15 @@
     } catch (err) {
       console.warn('dyad: could not read the best record', err);
     }
-    try {
-      await backend.submitScore(result);
-    } catch (err) {
-      console.warn('dyad: could not save the record', err);
+    if (!auto) {
+      try {
+        await backend.submitScore(result);
+      } catch (err) {
+        console.warn('dyad: could not save the record', err);
+      }
     }
     if (disposed) return;
-    screen.go({ name: 'result', song, chart: chartRef, result, best, isNewBest: isNewBest(result, best) });
+    screen.go({ name: 'result', song, chart: chartRef, result, best, isNewBest: !auto && isNewBest(result, best) });
   }
 
   // ─── document events ────────────────────────────────────────────────────
