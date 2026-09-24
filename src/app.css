@@ -1,0 +1,286 @@
+/*
+ * DYAD shell base styles (DESIGN.md).
+ * Colour comes only from the custom properties injected by applyTheme()
+ * (src/design/tokens.ts): --void --ground --surface --raised --line --text
+ * --text-dim --text-faint --don --don-ink --kat --kat-ink --on-don --on-kat
+ * --flash --font-display --font-body. No hex literals in this file.
+ */
+@import '@fontsource-variable/unbounded/wght.css';
+@import '@fontsource/ibm-plex-sans-kr/400.css';
+@import '@fontsource/ibm-plex-sans-kr/500.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+html {
+  background: var(--void);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  background: var(--void);
+  color: var(--text);
+  font-family: var(--font-body, sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* App root. The 1280×720 frame (or the portrait shell) paints ground; outside it is void. */
+#app {
+  min-height: 100%;
+  background: var(--void);
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+
+button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+/* Focus = periwinkle ring, everywhere (DESIGN §1: kat is selection/focus). */
+:focus-visible {
+  outline: 2px solid var(--kat);
+  outline-offset: 2px;
+}
+
+/* ─── type roles (DESIGN §3) ─────────────────────────────────────────────── */
+
+.display,
+.wordmark {
+  font-family: var(--font-display, sans-serif);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.wordmark {
+  letter-spacing: -0.02em;
+}
+
+.dim {
+  color: var(--text-dim);
+}
+
+.faint {
+  color: var(--text-faint);
+}
+
+.caption {
+  font-size: 14px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── screen frame (DESIGN §4: 8px grid, left aligned, no cards) ─────────── */
+
+.screen {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding: 24px;
+  display: grid;
+  gap: 24px;
+  align-content: start;
+}
+
+/* Every screen mounts fresh (App.svelte keys on the route), so it enters with one fade + rise. */
+.screen,
+.boot {
+  animation: screen-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.screen-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* ─── bricks (DESIGN §2): corner radius = shortest side ÷ 8 ─────────────── */
+
+.btn {
+  --h: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--h);
+  padding: 0 20px;
+  border: 0;
+  border-radius: calc(var(--h) / 8);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition:
+    transform 80ms ease-out,
+    filter 120ms ease-out;
+}
+
+/* Bricks answer the pointer: brighten under it, sink when pressed. */
+.btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.96);
+  filter: brightness(0.95);
+}
+
+.btn-sm {
+  --h: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+/* Amber = action (DESIGN §1). */
+.btn-primary {
+  background: var(--don);
+  color: var(--on-don);
+}
+
+.btn-secondary {
+  background: var(--raised);
+  color: var(--text);
+}
+
+.btn:disabled {
+  background: var(--raised);
+  color: var(--text-faint);
+}
+
+.field {
+  --h: 40px;
+  height: var(--h);
+  padding: 0 12px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--h) / 8);
+  font-variant-numeric: tabular-nums;
+}
+
+.field:focus-visible {
+  outline: 2px solid var(--kat);
+  outline-offset: 0;
+  border-color: transparent;
+}
+
+/* Periwinkle = selection (sliders, toggles). */
+input[type='range'] {
+  accent-color: var(--kat);
+  margin: 0;
+}
+
+.switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 48px;
+  height: 24px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--raised);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.switch::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--text-faint);
+}
+
+.switch:checked {
+  background: var(--kat);
+  border-color: var(--kat);
+}
+
+.switch:checked::before {
+  left: 27px;
+  background: var(--on-kat);
+}
+
+/* ─── motion (DESIGN §5): short and answering; the OS setting turns it all off ── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

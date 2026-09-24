@@ -1,0 +1,33 @@
+{
+  "name": "dyad",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Browser rhythm game with two note types, converted deterministically from osu!taiko charts.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "songs:build": "node tools/build-songs.ts",
+    "songs:convert": "node tools/convert-osu.ts",
+    "songs:fixture": "node tools/gen-fixture.ts"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@types/node": "^26.6.2",
+    "sharp": "^0.35.4",
+    "svelte": "^5.57.1",
+    "svelte-check": "^4.7.6",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
+  },
+  "dependencies": {
+    "@fontsource-variable/unbounded": "^5.3.0",
+    "@fontsource/ibm-plex-sans-kr": "^5.3.0",
+    "pixi.js": "^8.21.0"
+  }
+}

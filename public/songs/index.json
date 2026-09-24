@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "songs": [
+    {
+      "id": "prism",
+      "title": "Prism",
+      "artist": "",
+      "palette": [
+        "#696DB9",
+        "#283567",
+        "#55A8E6"
+      ],
+      "audioOffset": 0,
+      "durationMs": 127988,
+      "audio": "audio.11abfb26.webm",
+      "jacket": "jacket.23b48b98.avif",
+      "jacketSm": "jacket-sm.1411a827.avif",
+      "charts": [
+        {
+          "tier": "easy",
+          "name": "Easy",
+          "file": "chart.easy.json",
+          "hash": "55accb0f3cfad4d467eea1664905bf14885e915ee7891d3d93c0f829a71527ef",
+          "od": 4,
+          "bpm": [
+            154,
+            188
+          ],
+          "notes": 265,
+          "level": 4
+        },
+        {
+          "tier": "normal",
+          "name": "Normal",
+          "file": "chart.normal.json",
+          "hash": "c599dc181a373c8b433c13f55baeeb8a8a1e8b08300e4eb892d86ec7fc946c70",
+          "od": 5,
+          "bpm": [
+            154,
+            188
+          ],
+          "notes": 458,
+          "level": 7
+        },
+        {
+          "tier": "hard",
+          "name": "Hard",
+          "file": "chart.hard.json",
+          "hash": "44f063a9550355684c154bd03d1758d1c1cff8653e93af1b91701c274453c1df",
+          "od": 6,
+          "bpm": [
+            154,
+            178
+          ],
+          "notes": 783,
+          "level": 10
+        }
+      ]
+    }
+  ]
+}

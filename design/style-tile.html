@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DYAD Style Tile</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=IBM+Plex+Sans+KR:wght@400;500&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --void: #07070C;
+    --ground: #12131F;
+    --surface: #1A1B2B;
+    --raised: #24263A;
+    --line: #343651;
+    --text: #EEEDF8;
+    --text-dim: #A2A3BE;
+    --text-faint: #6C6E8A;
+    --don: #FFB432;
+    --don-ink: #FFB432;
+    --kat: #8FA0FF;
+    --kat-ink: #8FA0FF;
+    --on-don: #241600;
+    --on-kat: #0A0E33;
+    --flash: #FFFFFF;
+    --tint: #1A1826;
+    --display: 'Unbounded', 'Arial Black', sans-serif;
+    --body: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      color-scheme: light;
+      --void: #C6C5D3;
+      --ground: #F6F5FB;
+      --surface: #FFFFFF;
+      --raised: #ECEBF4;
+      --line: #D5D4E2;
+      --text: #15152A;
+      --text-dim: #55566E;
+      --text-faint: #80819A;
+      --don: #F0A000;
+      --don-ink: #A66300;
+      --kat: #7085FF;
+      --kat-ink: #3D4ED0;
+      --tint: #F3EFF6;
+    }
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --void: #C6C5D3;
+    --ground: #F6F5FB;
+    --surface: #FFFFFF;
+    --raised: #ECEBF4;
+    --line: #D5D4E2;
+    --text: #15152A;
+    --text-dim: #55566E;
+    --text-faint: #80819A;
+    --don: #F0A000;
+    --don-ink: #A66300;
+    --kat: #7085FF;
+    --kat-ink: #3D4ED0;
+    --tint: #F3EFF6;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 56px 96px;
+    display: grid;
+    gap: 72px;
+  }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(56px, 12vw, 120px);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  h2 {
+    font-family: var(--body);
+    font-weight: 500;
+    font-size: 20px;
+  }
+  h3 { font-weight: 500; font-size: 16px; color: var(--text-dim); }
+  p { margin: 0; max-width: 62ch; }
+  p.lead { font-size: 20px; color: var(--text); max-width: 32ch; }
+  .dim { color: var(--text-dim); }
+  .faint { color: var(--text-faint); }
+  section { display: grid; gap: 20px; }
+  .row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+  .grow { flex: 1 1 260px; }
+  svg { display: block; max-width: 100%; height: auto; }
+  code { font-family: var(--body); font-size: 14px; color: var(--text-dim); }
+  ul { margin: 0; padding-left: 18px; }
+  li { margin: 0; }
+
+  /* hero */
+  .hero { gap: 28px; }
+  .hero-notes { display: grid; gap: 14px; margin-top: 8px; }
+
+  /* swatches */
+  .palette { display: grid; gap: 12px; }
+  .sw-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+  .sw {
+    height: 84px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    font-size: 12px; line-height: 1.3;
+  }
+  .sw b { font-weight: 500; }
+  .sw span { opacity: .75; }
+
+  /* shapes */
+  .shape-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+  .shape {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 20px;
+    display: grid; gap: 14px;
+  }
+  .shape svg { width: 100%; }
+  .shape .cap { font-size: 14px; color: var(--text-dim); }
+
+  /* judge */
+  .judge-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+  .judge { background: var(--surface); border: 1px solid var(--line); padding: 20px; display: grid; gap: 12px; }
+  .judge-word { font-family: var(--display); font-weight: 500; font-size: 40px; line-height: 1; }
+
+  /* type */
+  .score {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 64px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .combo { font-family: var(--display); font-weight: 500; font-size: 28px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .type-block { background: var(--surface); border: 1px solid var(--line); padding: 24px; display: grid; gap: 16px; }
+  .scale { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: baseline; }
+  .scale span { font-weight: 500; line-height: 1; }
+
+  /* mocks */
+  .mocks { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+  .mock { display: grid; gap: 10px; }
+  .mock svg { border: 1px solid var(--line); background: var(--void); }
+  .mock-portrait svg { width: 300px; }
+  .mock-landscape svg { width: 560px; }
+
+  .btn {
+    font: 500 16px var(--body);
+    padding: 12px 20px;
+    border: 0; border-radius: 6px;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--don); color: var(--on-don); }
+  .btn-secondary { background: var(--raised); color: var(--text); }
+  .btn:focus-visible { outline: 2px solid var(--kat); outline-offset: 2px; }
+  .field {
+    font: 400 16px var(--body);
+    padding: 10px 12px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--line); border-radius: 6px;
+  }
+  .field:focus-visible { outline: 2px solid var(--kat); outline-offset: 0; border-color: transparent; }
+  .jacket-pick { display: flex; gap: 12px; }
+  .jk { width: 88px; height: 88px; background: var(--raised); border-radius: 6px; border: 2px solid transparent; }
+  .jk.on { border-color: var(--kat); }
+  .diff { display: flex; gap: 4px; align-items: center; }
+  .diff i { width: 10px; height: 10px; border-radius: 2px; background: var(--line); display: block; }
+  .diff i.on { background: var(--don); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1>DYAD</h1>
+    <p class="lead">색은 둘, 판정은 밝기, 모양은 곧음과 꺾임.</p>
+    <div class="hero-notes">
+      <!-- don: straight brick, kat: chevron brick. Track-local: notes travel downward here. -->
+      <svg viewBox="0 0 920 66" aria-label="돈 노트: 곧은 앰버 막대">
+        <rect x="0" y="8" width="920" height="50" rx="6" fill="var(--don)"/>
+      </svg>
+      <svg viewBox="0 0 920 116" aria-label="캇 노트: 위로 꺾인 페리윙클 막대">
+        <path d="M6 66 L460 8 L914 66 L914 108 L460 58 L6 108 Z" fill="var(--kat)" stroke="var(--kat)" stroke-width="12" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <p class="dim">돈은 아래 행, 곧은 막대, 따뜻한 앰버. 캇은 위 행, 노트가 오는 쪽으로 꺾인 막대, 차가운 페리윙클. 색약이거나 흑백이어도 실루엣만으로 갈린다.</p>
+  </section>
+
+  <section>
+    <h2>색</h2>
+    <p class="dim">유채색은 이 둘뿐이다. 버튼, 포커스, 난이도, 진행바, 결과까지 두 색과 파랑-보라로 기운 무채색 단계로만 짠다. 자켓에서 뽑은 색은 플레이 배경 틴트에만 쓴다.</p>
+    <div class="palette">
+      <h3>다크 (기본)</h3>
+      <div class="sw-row">
+        <div class="sw" style="background:#07070C;color:#A2A3BE"><b>void</b><span>#07070C</span></div>
+        <div class="sw" style="background:#12131F;color:#A2A3BE"><b>ground</b><span>#12131F</span></div>
+        <div class="sw" style="background:#1A1B2B;color:#A2A3BE"><b>surface</b><span>#1A1B2B</span></div>
+        <div class="sw" style="background:#24263A;color:#A2A3BE"><b>raised</b><span>#24263A</span></div>
+        <div class="sw" style="background:#343651;color:#EEEDF8"><b>line</b><span>#343651</span></div>
+        <div class="sw" style="background:#6C6E8A;color:#EEEDF8"><b>text-faint</b><span>#6C6E8A</span></div>
+        <div class="sw" style="background:#A2A3BE;color:#12131F"><b>text-dim</b><span>#A2A3BE</span></div>
+        <div class="sw" style="background:#EEEDF8;color:#12131F"><b>text</b><span>#EEEDF8</span></div>
+        <div class="sw" style="background:#FFB432;color:#241600"><b>don</b><span>#FFB432</span></div>
+        <div class="sw" style="background:#8FA0FF;color:#0A0E33"><b>kat</b><span>#8FA0FF</span></div>
+        <div class="sw" style="background:#FFFFFF;color:#12131F"><b>flash</b><span>#FFFFFF</span></div>
+      </div>
+      <h3>라이트</h3>
+      <div class="sw-row">
+        <div class="sw" style="background:#C6C5D3;color:#15152A"><b>void</b><span>#C6C5D3</span></div>
+        <div class="sw" style="background:#F6F5FB;color:#55566E"><b>ground</b><span>#F6F5FB</span></div>
+        <div class="sw" style="background:#FFFFFF;color:#55566E"><b>surface</b><span>#FFFFFF</span></div>
+        <div class="sw" style="background:#ECEBF4;color:#55566E"><b>raised</b><span>#ECEBF4</span></div>
+        <div class="sw" style="background:#D5D4E2;color:#15152A"><b>line</b><span>#D5D4E2</span></div>
+        <div class="sw" style="background:#80819A;color:#F6F5FB"><b>text-faint</b><span>#80819A</span></div>
+        <div class="sw" style="background:#55566E;color:#F6F5FB"><b>text-dim</b><span>#55566E</span></div>
+        <div class="sw" style="background:#15152A;color:#F6F5FB"><b>text</b><span>#15152A</span></div>
+        <div class="sw" style="background:#F0A000;color:#241600"><b>don</b><span>#F0A000</span></div>
+        <div class="sw" style="background:#A66300;color:#F6F5FB"><b>don-ink</b><span>#A66300</span></div>
+        <div class="sw" style="background:#7085FF;color:#0A0E33"><b>kat</b><span>#7085FF</span></div>
+        <div class="sw" style="background:#3D4ED0;color:#F6F5FB"><b>kat-ink</b><span>#3D4ED0</span></div>
+      </div>
+    </div>
+    <div class="row" style="align-items:center">
+      <button class="btn btn-primary" type="button">플레이</button>
+      <button class="btn btn-secondary" type="button">설정</button>
+      <input class="field" id="offset" type="text" value="+12 ms" aria-label="오프셋" style="width:120px">
+      <div class="jacket-pick" aria-label="곡 선택: 선택된 자켓만 캇 색 테두리">
+        <div class="jk"></div><div class="jk on"></div><div class="jk"></div>
+      </div>
+      <div class="diff" aria-label="난이도 Oni: 앰버 4칸"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><span class="dim" style="margin-left:6px">Oni</span></div>
+    </div>
+    <p class="faint">앰버는 행동(주 버튼, 확인), 페리윙클은 선택과 포커스(현재 항목, 링크, 슬라이더). 난이도는 색을 바꾸지 않고 앰버 칸 수로 센다.</p>
+  </section>
+
+  <section>
+    <h2>판정은 밝기로</h2>
+    <p class="dim">Great, OK, Miss에 세 번째 색을 쓰지 않는다. 흰 섬광, 색 그대로, 회색으로 탈색. 게이트 셀도 같은 규칙을 따른다.</p>
+    <div class="judge-grid">
+      <div class="judge">
+        <div class="judge-word">Great</div>
+        <svg viewBox="0 0 240 80" aria-label="Great: 흰 섬광으로 켜진 셀과 노트">
+          <rect x="0" y="0" width="118" height="34" rx="4" fill="var(--flash)"/>
+          <rect x="122" y="0" width="118" height="34" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <rect x="0" y="40" width="118" height="34" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <rect x="122" y="40" width="118" height="34" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+        </svg>
+        <p class="cap dim">셀이 흰색으로 튀었다가 120ms 안에 타입 색으로 가라앉는다. 노트는 90ms 섬광 뒤 사라진다.</p>
+      </div>
+      <div class="judge">
+        <div class="judge-word dim">OK</div>
+        <svg viewBox="0 0 240 80" aria-label="OK: 타입 색 60%로 켜진 셀">
+          <rect x="0" y="0" width="118" height="34" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <rect x="122" y="0" width="118" height="34" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <rect x="0" y="40" width="118" height="34" rx="4" fill="var(--don)" opacity=".6"/>
+          <rect x="122" y="40" width="118" height="34" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+        </svg>
+        <p class="cap dim">섬광 없이 타입 색 60%. 노트는 색 그대로 사라진다.</p>
+      </div>
+      <div class="judge">
+        <div class="judge-word faint">Miss</div>
+        <svg viewBox="0 0 240 80" aria-label="Miss: 반응 없는 셀과 탈색된 노트">
+          <rect x="0" y="0" width="118" height="34" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <rect x="122" y="0" width="118" height="34" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <rect x="0" y="40" width="118" height="34" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <rect x="122" y="40" width="118" height="34" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <rect x="48" y="52" width="144" height="12" rx="2" fill="var(--text-faint)" opacity=".7"/>
+        </svg>
+        <p class="cap dim">셀은 반응하지 않고, 노트는 회색이 된 채 등속으로 게이트를 지나간다. 흔들림도 빨간 섬광도 없다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>모양</h2>
+    <p class="dim">모든 도형은 모서리 반경이 짧은 변의 1/8인 브릭에서 시작한다. 원은 쓰지 않는다. 트랙 폭을 W, 노트 두께를 N = W/12 로 둔다.</p>
+    <div class="shape-grid">
+      <div class="shape">
+        <h3>돈</h3>
+        <svg viewBox="0 0 300 120">
+          <rect x="0" y="0" width="300" height="120" fill="var(--surface)"/>
+          <line x1="150" y1="0" x2="150" y2="120" stroke="var(--line)" stroke-dasharray="4 6"/>
+          <rect x="60" y="45" width="180" height="30" rx="4" fill="var(--don)"/>
+        </svg>
+        <p class="cap">곧은 브릭, 폭 0.6W, 중앙. 손 경계 점선 위에 걸쳐 어느 손이든 된다는 뜻을 그대로 보인다.</p>
+      </div>
+      <div class="shape">
+        <h3>캇</h3>
+        <svg viewBox="0 0 300 120">
+          <rect x="0" y="0" width="300" height="120" fill="var(--surface)"/>
+          <line x1="150" y1="0" x2="150" y2="120" stroke="var(--line)" stroke-dasharray="4 6"/>
+          <path d="M64 70 L150 40 L236 70 L236 96 L150 66 L64 96 Z" fill="var(--kat)" stroke="var(--kat)" stroke-width="8" stroke-linejoin="round"/>
+        </svg>
+        <p class="cap">꺾인 브릭. 가운데가 노트가 오는 쪽으로 N만큼 솟는다. 위 행이 위로 뾰족하다는 뜻.</p>
+      </div>
+      <div class="shape">
+        <h3>왕 돈</h3>
+        <svg viewBox="0 0 300 120">
+          <rect x="0" y="0" width="300" height="120" fill="var(--surface)"/>
+          <rect x="0" y="45" width="300" height="30" rx="4" fill="var(--don)"/>
+          <line x1="150" y1="45" x2="150" y2="75" stroke="var(--ground)" stroke-width="2"/>
+        </svg>
+        <p class="cap">트랙 전체 폭 하나에 가운데 이음선. 패드 한 행의 두 칸을 그대로 그린 형태.</p>
+      </div>
+      <div class="shape">
+        <h3>왕 캇</h3>
+        <svg viewBox="0 0 300 120">
+          <rect x="0" y="0" width="300" height="120" fill="var(--surface)"/>
+          <path d="M4 70 L77 40 L150 70 L223 40 L296 70 L296 96 L223 66 L150 96 L77 66 L4 96 Z" fill="var(--kat)" stroke="var(--kat)" stroke-width="8" stroke-linejoin="round"/>
+          <line x1="150" y1="66" x2="150" y2="100" stroke="var(--ground)" stroke-width="2"/>
+        </svg>
+        <p class="cap">쉐브론 둘을 이어 M자. 한 눈에 양손이라고 읽힌다.</p>
+      </div>
+      <div class="shape">
+        <h3>게이트, 대기</h3>
+        <svg viewBox="0 0 300 120">
+          <rect x="0" y="0" width="300" height="120" fill="var(--surface)"/>
+          <rect x="4" y="20" width="144" height="36" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <rect x="152" y="20" width="144" height="36" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <rect x="4" y="62" width="144" height="36" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <rect x="152" y="62" width="144" height="36" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <text x="76" y="43" text-anchor="middle" font-size="13" fill="var(--text-faint)">R</text>
+          <text x="224" y="43" text-anchor="middle" font-size="13" fill="var(--text-faint)">U</text>
+          <text x="76" y="85" text-anchor="middle" font-size="13" fill="var(--text-faint)">F</text>
+          <text x="224" y="85" text-anchor="middle" font-size="13" fill="var(--text-faint)">J</text>
+        </svg>
+        <p class="cap">2×2 패드 미니어처가 판정선이다. 열 = 손, 캇 행은 노트가 오는 쪽. 판정선은 두 행 사이 이음.</p>
+      </div>
+      <div class="shape">
+        <h3>게이트, 왕 캇 성공</h3>
+        <svg viewBox="0 0 300 120">
+          <rect x="0" y="0" width="300" height="120" fill="var(--surface)"/>
+          <rect x="4" y="20" width="144" height="36" rx="4" fill="var(--kat)"/>
+          <rect x="152" y="20" width="144" height="36" rx="4" fill="var(--kat)"/>
+          <rect x="4" y="62" width="144" height="36" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <rect x="152" y="62" width="144" height="36" rx="4" fill="var(--raised)" stroke="var(--line)"/>
+          <text x="76" y="43" text-anchor="middle" font-size="13" fill="var(--on-kat)">R</text>
+          <text x="224" y="43" text-anchor="middle" font-size="13" fill="var(--on-kat)">U</text>
+          <text x="76" y="85" text-anchor="middle" font-size="13" fill="var(--text-faint)">F</text>
+          <text x="224" y="85" text-anchor="middle" font-size="13" fill="var(--text-faint)">J</text>
+        </svg>
+        <p class="cap">친 손의 열과 친 타입의 행이 켜진다. 왕노트 성공은 한 행 두 칸이 같이 켜진다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>타이포</h2>
+    <p class="dim">점수, 콤보, 판정, 타이틀은 Unbounded. 넓고 무거워 북 같은 무게가 있고 한 프레임에 읽힌다. 본문과 라벨은 IBM Plex Sans KR. 서체는 이 둘뿐이다.</p>
+    <div class="type-block">
+      <div class="score">987,650</div>
+      <div class="combo">214 combo</div>
+      <div class="scale">
+        <span style="font-size:96px;font-family:var(--display);font-weight:700">96</span>
+        <span style="font-size:64px;font-family:var(--display);font-weight:700">64</span>
+        <span style="font-size:40px;font-family:var(--display);font-weight:500">40</span>
+        <span style="font-size:28px;font-family:var(--display);font-weight:500">28</span>
+        <span style="font-size:20px">20 곡 제목</span>
+        <span style="font-size:16px;font-weight:400">16 본문</span>
+        <span style="font-size:14px;font-weight:400" class="dim">14 보조</span>
+        <span style="font-size:12px;font-weight:400" class="faint">12 키 라벨</span>
+      </div>
+      <p>점수는 항상 7자리 고정폭으로 오른쪽 정렬한다. 자릿수가 바뀌어도 폭이 흔들리지 않는다. 판정 텍스트는 Great, OK, Miss 영문 그대로 두고 번역하지 않는다. 라벨에 대문자를 쓰지 않는다.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>화면</h2>
+    <p class="dim">같은 트랙 렌더러를 세로에서는 세워서, 가로에서는 눕혀서 쓴다. 배경은 ground에 자켓 색을 12% 섞은 틴트. 자켓 원본은 플레이 중 배경으로 깔지 않는다.</p>
+    <div class="mocks">
+      <div class="mock mock-portrait">
+        <svg viewBox="0 0 720 1280" aria-label="세로 모드 플레이 화면 목업">
+          <rect width="720" height="1280" fill="var(--tint)"/>
+          <!-- top info -->
+          <rect x="32" y="28" width="96" height="96" rx="8" fill="var(--raised)"/>
+          <text x="148" y="66" font-size="24" font-weight="500" fill="var(--text)">Twin Pulse</text>
+          <text x="148" y="98" font-size="18" fill="var(--text-dim)">Oni</text>
+          <text x="688" y="76" text-anchor="end" font-family="Unbounded, sans-serif" font-weight="700" font-size="44" fill="var(--text)">987,650</text>
+          <text x="688" y="112" text-anchor="end" font-family="Unbounded, sans-serif" font-weight="500" font-size="22" fill="var(--text-dim)">214</text>
+          <rect x="32" y="138" width="656" height="4" fill="var(--line)"/>
+          <rect x="32" y="138" width="270" height="4" fill="var(--kat)"/>
+          <!-- track -->
+          <rect x="60" y="156" width="600" height="600" fill="var(--surface)"/>
+          <line x1="360" y1="156" x2="360" y2="756" stroke="var(--line)" stroke-dasharray="6 10" stroke-width="2"/>
+          <line x1="60" y1="236" x2="660" y2="236" stroke="var(--line)"/>
+          <line x1="60" y1="396" x2="660" y2="396" stroke="var(--text-faint)"/>
+          <line x1="60" y1="556" x2="660" y2="556" stroke="var(--line)"/>
+          <line x1="60" y1="716" x2="660" y2="716" stroke="var(--line)"/>
+          <!-- notes: big don, kat, don, kat -->
+          <rect x="60" y="230" width="600" height="50" rx="6" fill="var(--don)"/>
+          <line x1="360" y1="230" x2="360" y2="280" stroke="var(--ground)" stroke-width="2"/>
+          <path d="M186 425 L360 375 L534 425 L534 469 L360 419 L186 469 Z" fill="var(--kat)" stroke="var(--kat)" stroke-width="12" stroke-linejoin="round"/>
+          <rect x="180" y="540" width="360" height="50" rx="6" fill="var(--don)"/>
+          <path d="M186 700 L360 650 L534 700 L534 744 L360 694 L186 744 Z" fill="var(--kat)" stroke="var(--kat)" stroke-width="12" stroke-linejoin="round"/>
+          <!-- gate -->
+          <rect x="60" y="764" width="297" height="50" rx="6" fill="var(--raised)" stroke="var(--line)" stroke-width="2"/>
+          <rect x="363" y="764" width="297" height="50" rx="6" fill="var(--raised)" stroke="var(--line)" stroke-width="2"/>
+          <rect x="60" y="820" width="297" height="50" rx="6" fill="var(--flash)"/>
+          <rect x="363" y="820" width="297" height="50" rx="6" fill="var(--raised)" stroke="var(--line)" stroke-width="2"/>
+          <text x="360" y="930" text-anchor="middle" font-family="Unbounded, sans-serif" font-weight="500" font-size="40" fill="var(--text)">Great</text>
+          <!-- touch zones -->
+          <rect x="60" y="960" width="297" height="150" rx="10" fill="var(--raised)"/>
+          <rect x="363" y="960" width="297" height="150" rx="10" fill="var(--raised)"/>
+          <rect x="60" y="1122" width="297" height="150" rx="10" fill="var(--don)" opacity=".4"/>
+          <rect x="363" y="1122" width="297" height="150" rx="10" fill="var(--raised)"/>
+          <path d="M148 1046 L208 1022 L268 1046 L268 1058 L208 1034 L148 1058 Z" fill="var(--text-faint)"/>
+          <path d="M451 1046 L511 1022 L571 1046 L571 1058 L511 1034 L451 1058 Z" fill="var(--text-faint)"/>
+          <rect x="148" y="1191" width="120" height="14" rx="2" fill="var(--text-faint)"/>
+          <rect x="451" y="1191" width="120" height="14" rx="2" fill="var(--text-faint)"/>
+        </svg>
+        <p class="cap dim">세로 720×1280. 위 12% 정보, 트랙, 게이트, 아래 38% 터치존. 왼손 돈을 친 순간.</p>
+      </div>
+      <div class="mock mock-landscape">
+        <svg viewBox="0 0 1280 720" aria-label="가로 모드 플레이 화면 목업">
+          <rect width="1280" height="720" fill="var(--tint)"/>
+          <!-- top strip -->
+          <rect x="32" y="20" width="104" height="104" rx="8" fill="var(--raised)"/>
+          <text x="156" y="62" font-size="24" font-weight="500" fill="var(--text)">Twin Pulse</text>
+          <text x="156" y="94" font-size="18" fill="var(--text-dim)">Oni</text>
+          <text x="1248" y="78" text-anchor="end" font-family="Unbounded, sans-serif" font-weight="700" font-size="48" fill="var(--text)">987,650</text>
+          <text x="1248" y="112" text-anchor="end" font-family="Unbounded, sans-serif" font-weight="500" font-size="22" fill="var(--text-dim)">214</text>
+          <!-- track: notes travel right to left; width axis vertical, top = left hand -->
+          <rect x="0" y="144" width="1280" height="432" fill="var(--surface)"/>
+          <line x1="0" y1="360" x2="1280" y2="360" stroke="var(--line)" stroke-dasharray="6 10" stroke-width="2"/>
+          <line x1="400" y1="144" x2="400" y2="576" stroke="var(--line)"/>
+          <line x1="560" y1="144" x2="560" y2="576" stroke="var(--text-faint)"/>
+          <line x1="720" y1="144" x2="720" y2="576" stroke="var(--line)"/>
+          <line x1="880" y1="144" x2="880" y2="576" stroke="var(--line)"/>
+          <line x1="1040" y1="144" x2="1040" y2="576" stroke="var(--line)"/>
+          <line x1="1200" y1="144" x2="1200" y2="576" stroke="var(--line)"/>
+          <!-- notes -->
+          <rect x="382" y="230" width="36" height="260" rx="4" fill="var(--don)"/>
+          <path d="M556 236 L592 360 L556 484 L524 484 L560 360 L524 236 Z" fill="var(--kat)" stroke="var(--kat)" stroke-width="8" stroke-linejoin="round"/>
+          <rect x="702" y="144" width="36" height="432" rx="4" fill="var(--don)"/>
+          <line x1="702" y1="360" x2="738" y2="360" stroke="var(--ground)" stroke-width="2"/>
+          <path d="M876 148 L912 254 L876 360 L912 466 L876 572 L844 572 L880 466 L844 360 L880 254 L844 148 Z" fill="var(--kat)" stroke="var(--kat)" stroke-width="8" stroke-linejoin="round"/>
+          <rect x="1182" y="230" width="36" height="260" rx="4" fill="var(--don)"/>
+          <!-- gate: don column near (left), kat column far (right); top cell = left hand -->
+          <rect x="216" y="148" width="36" height="210" rx="4" fill="var(--raised)" stroke="var(--line)" stroke-width="2"/>
+          <rect x="216" y="362" width="36" height="210" rx="4" fill="var(--kat)"/>
+          <rect x="258" y="148" width="36" height="210" rx="4" fill="var(--raised)" stroke="var(--line)" stroke-width="2"/>
+          <rect x="258" y="362" width="36" height="210" rx="4" fill="var(--raised)" stroke="var(--line)" stroke-width="2"/>
+          <text x="234" y="258" text-anchor="middle" font-size="14" fill="var(--text-faint)">F</text>
+          <text x="234" y="472" text-anchor="middle" font-size="14" fill="var(--on-kat)">J</text>
+          <text x="276" y="258" text-anchor="middle" font-size="14" fill="var(--text-faint)">R</text>
+          <text x="276" y="472" text-anchor="middle" font-size="14" fill="var(--text-faint)">U</text>
+          <!-- bottom strip -->
+          <text x="256" y="660" text-anchor="middle" font-family="Unbounded, sans-serif" font-weight="500" font-size="36" fill="var(--text-dim)">OK</text>
+          <rect x="32" y="690" width="1216" height="4" fill="var(--line)"/>
+          <rect x="32" y="690" width="500" height="4" fill="var(--kat)"/>
+        </svg>
+        <p class="cap dim">가로 1280×720. 트랙을 눕혀 오른쪽에서 왼쪽으로. 위 절반 왼손, 아래 절반 오른손. 캇의 꺾임은 노트가 오는 오른쪽을 가리킨다. 게이트는 왼쪽 20% 지점, 오른손 캇을 OK로 친 순간.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>모션</h2>
+    <ul class="dim">
+      <li>입력에 답하는 움직임만 둔다. 화면 진입 애니메이션, 호버 트랜지션, 떠다니는 장식은 없다.</li>
+      <li>히트: 노트가 게이트 쪽으로 N/2 밀리며 90ms 안에 사라진다. 게이트 셀은 즉시 켜지고 120ms 감쇠. 스케일 바운스 없음.</li>
+      <li>Miss: 탈색된 채 등속으로 게이트를 지나 N×2 뒤에서 사라진다.</li>
+      <li>콤보 숫자는 값만 바뀐다. 50 단위에서만 한 번 밝아졌다 돌아온다.</li>
+      <li>결과 화면에서만 두 색을 같이 쓴다. 정확도 숫자는 앰버, 신기록 표시는 페리윙클.</li>
+      <li>prefers-reduced-motion이면 밀림과 섬광을 끄고 즉시 사라짐만 남긴다.</li>
+    </ul>
+  </section>
+
+</div>
+
+</body>
+</html>

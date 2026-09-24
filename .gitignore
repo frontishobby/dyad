@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.playwright-mcp/
+.tools-cache/
+*.log
+.DS_Store
+songs-src/**/*.wav
+colab/*_output.ipynb
