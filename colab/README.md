@@ -6,7 +6,8 @@ DYAD 채보 생성용 Colab 노트북. 음원 하나 → Mapperatorinator(V32, o
 | --- | --- |
 | `dyad_taiko_generate.ipynb` | EASY / NORMAL / HARD 세 채보 생성 + `song.wav` / `song.json` 묶음 (`dyad-<id>.zip`). 자켓은 로컬에서 넣는다 |
 
-브라우저에서 열기: Colab 에서 GitHub 탭 → 이 저장소 → `colab/dyad_taiko_generate.ipynb`. 런타임은 GPU(T4 이상).
+브라우저에서 열기: https://colab.research.google.com/github/frontishobby/dyad/blob/main/colab/dyad_taiko_generate.ipynb
+(공개 저장소라 따로 배포할 것 없이 이 링크가 곧 배포다. `main` 에 푸시하면 링크가 바로 새 버전을 연다.) 런타임은 GPU(T4 이상).
 
 ## 결과물 쓰는 법
 
