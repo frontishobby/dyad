@@ -66,10 +66,10 @@ function visibleLines(view: Container): Graphics[] {
   return lineLayer.children.filter((c) => c.visible) as Graphics[];
 }
 
-/** The judgement line's flash overlay (gate layer: line, flash, then the ghosts). */
+/** The receptor ring's flash overlay (gate layer: line, ring, flash, then the ghosts). */
 function seamFlash(view: Container): Graphics {
   const world = byLabel(view, 'world');
-  return (world.children[2] as Container).children[1] as Graphics;
+  return (world.children[2] as Container).children[2] as Graphics;
 }
 
 function hudTexts(view: Container): Text[] {
@@ -251,10 +251,12 @@ describe('createTrackRenderer', () => {
     expect(hudTexts(renderer.view).map((t) => t.text).sort()).toEqual(['Great', 'Miss', 'OK']);
     const world = byLabel(renderer.view, 'world');
     const gateLayer = world.children[2] as Container;
-    expect(gateLayer.children).toHaveLength(8); // line, flash, then per type: regular ghost + two big halves
-    const [line, flash, donGhost, donL, donR, katGhost] = gateLayer.children as [Graphics, Graphics, Graphics, Graphics, Graphics, Graphics, Graphics, Graphics];
+    expect(gateLayer.children).toHaveLength(9); // line, ring, flash, then per type: regular ghost + two big halves
+    const [line, ring, flash, donGhost, donL, donR, katGhost] = gateLayer.children as [Graphics, Graphics, Graphics, Graphics, Graphics, Graphics, Graphics, Graphics, Graphics];
     renderer.frame(500, engine);
     expect(line.visible).toBe(true);
+    expect(ring.visible).toBe(true);
+    expect(ring.x).toBeCloseTo(layout.W / 2, 9);
     expect(flash.visible).toBe(false);
     expect(donGhost.visible).toBe(false);
     // One hand: the regular don shape, centred on the seam, at 40%; no flash.

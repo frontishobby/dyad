@@ -21,6 +21,7 @@ import {
   PORTRAIT_SPACING,
 } from '../../src/render/layout.ts';
 import type { Rect } from '../../src/input/types.ts';
+import { noteDiameter } from '../../src/render/shapes.ts';
 
 function right(r: Rect): number {
   return r.x + r.w;
@@ -329,14 +330,14 @@ describe('computeLayout landscape', () => {
   });
 });
 
-describe('note sizes (DESIGN §2 after the first playtest)', () => {
-  it('regular notes are 0.5W wide and W/16 thick', () => {
+describe('note sizes (DESIGN §2)', () => {
+  it('the unit N is W/16; note diameters follow the lead distance, not W', () => {
     const L = computeLayout('landscape');
-    expect(SHAPE.noteWidth * L.W).toBe(160);
     expect(L.N).toBe(20);
+    expect(noteDiameter(L.leadPx)).toBeCloseTo(1024 * SHAPE.circle, 9);
     const P = computeLayout('portrait');
-    expect(SHAPE.noteWidth * P.W).toBe(320);
     expect(P.N).toBe(40);
+    expect(noteDiameter(P.leadPx)).toBeLessThan(noteDiameter(L.leadPx));
   });
 });
 

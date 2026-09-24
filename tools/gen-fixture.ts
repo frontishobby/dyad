@@ -496,89 +496,31 @@ export function renderAudio(events: readonly FixtureEvent[]): { left: Float64Arr
 
 export const JACKET_SIZE = 1024;
 
-type Point = readonly [x: number, y: number];
-
-/** SVG path for a polygon with every corner rounded to radius `r` (arcs, not béziers). */
-function roundedPolygonPath(points: readonly Point[], r: number): string {
-  const n = points.length;
-  const fmt = (v: number): string => v.toFixed(2).replace(/\.?0+$/, '');
-  const parts: string[] = [];
-  for (let i = 0; i < n; i++) {
-    const [px, py] = points[i]!;
-    const [ax, ay] = points[(i + n - 1) % n]!;
-    const [bx, by] = points[(i + 1) % n]!;
-    const ua = [ax - px, ay - py] as const;
-    const ub = [bx - px, by - py] as const;
-    const la = Math.hypot(ua[0], ua[1]);
-    const lb = Math.hypot(ub[0], ub[1]);
-    const u = [ua[0] / la, ua[1] / la] as const;
-    const v = [ub[0] / lb, ub[1] / lb] as const;
-    const cos = Math.max(-1, Math.min(1, u[0] * v[0] + u[1] * v[1]));
-    const theta = Math.acos(cos);
-    const d = Math.min(r / Math.tan(theta / 2), la / 2, lb / 2);
-    const p1 = [px + u[0] * d, py + u[1] * d] as const;
-    const p2 = [px + v[0] * d, py + v[1] * d] as const;
-    // Travel direction is A → P → B; in SVG's y-down space a positive cross
-    // product is a clockwise turn, which is sweep-flag 1.
-    const cross = -ua[0] * ub[1] + ua[1] * ub[0];
-    const sweep = cross > 0 ? 1 : 0;
-    parts.push(`${i === 0 ? 'M' : 'L'}${fmt(p1[0])} ${fmt(p1[1])}`);
-    parts.push(`A${fmt(r)} ${fmt(r)} 0 0 ${sweep} ${fmt(p2[0])} ${fmt(p2[1])}`);
-  }
-  parts.push('Z');
-  return parts.join(' ');
-}
-
-/** A kat: a bar of `thickness` bent upward by `rise` at its centre (DESIGN §2). */
-function chevronPath(cx: number, cy: number, width: number, thickness: number, rise: number): string {
-  const x0 = cx - width / 2;
-  const x1 = cx + width / 2;
-  const yTop = cy - thickness / 2 + rise / 2;
-  const points: Point[] = [
-    [x0, yTop],
-    [cx, yTop - rise],
-    [x1, yTop],
-    [x1, yTop + thickness],
-    [cx, yTop + thickness - rise],
-    [x0, yTop + thickness],
-  ];
-  return roundedPolygonPath(points, thickness * SHAPE.radius);
-}
-
-/** A don: a straight brick. */
-function brick(cx: number, cy: number, width: number, thickness: number, fill: string): string {
-  const r = thickness * SHAPE.radius;
-  return `<rect x="${cx - width / 2}" y="${cy - thickness / 2}" width="${width}" height="${thickness}" rx="${r}" fill="${fill}"/>`;
-}
-
 /**
- * The jacket: a snapshot of the track. Notes fall from the top toward a gate
- * at the bottom; a kat chevron and a big don brick are the two "pulses",
- * ghosted copies above them hint at the scroll. Only token colours are used.
+ * The jacket: a snapshot of the track. Notes fall from the top toward the
+ * judgement ring at the bottom; a kat disc and a big don disc are the two
+ * "pulses", ghosted copies above them hint at the scroll. Only token colours.
+ * The big don has the largest area so the palette ranks it first (build test).
  */
 export function jacketSvg(theme: Theme = DARK): string {
   const S = JACKET_SIZE;
   const W = 640;
   const x0 = (S - W) / 2;
   const cx = S / 2;
-  const T = 96;
-  const gap = T * SHAPE.gateGap;
-  const cellW = (W - gap) / 2;
-  const katW = W * SHAPE.noteWidth;
-  const rise = T * SHAPE.katPeak;
-  const gateTop = 768;
-  const cellR = T * SHAPE.radius;
+  const lead = 768;
+  const d = lead * SHAPE.circle * 4.5; // scaled up: a jacket is not a lane, and the pulses must own the palette
+  const D = d * SHAPE.bigCircle;
+  const stroke = d * SHAPE.ringStroke * 1.5;
 
   const beatLines: string[] = [];
   for (let y = 128; y < S; y += 128) {
     const isBar = y % 512 === 0;
     beatLines.push(
-      `<line x1="${x0}" y1="${y}" x2="${x0 + W}" y2="${y}" stroke="${isBar ? theme.textFaint : theme.line}" stroke-width="2"/>`,
+      `<line x1="${x0}" y1="${y}" x2="${x0 + W}" y2="${y}" stroke="${isBar ? theme.textFaint : theme.line}" stroke-width="1"/>`,
     );
   }
-
-  const cell = (col: number, row: number): string =>
-    `<rect x="${x0 + col * (cellW + gap)}" y="${gateTop + row * (T + gap)}" width="${cellW}" height="${T}" rx="${cellR}" fill="${theme.raised}" stroke="${theme.line}" stroke-width="2"/>`;
+  const disc = (cy: number, diameter: number, fill: string): string =>
+    `<circle cx="${cx}" cy="${cy}" r="${diameter / 2}" fill="${fill}"/>`;
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">`,
@@ -586,18 +528,13 @@ export function jacketSvg(theme: Theme = DARK): string {
     `<rect x="${x0}" y="0" width="${W}" height="${S}" fill="${theme.surface}"/>`,
     ...beatLines,
     `<line x1="${cx}" y1="0" x2="${cx}" y2="${S}" stroke="${theme.line}" stroke-width="2" stroke-dasharray="10 14"/>`,
-    // ghosts further up the track
-    `<path d="${chevronPath(cx, 128, katW, T, rise)}" fill="${theme.raised}"/>`,
-    brick(cx, 288, katW, T, theme.raised),
     // the two pulses
-    `<path d="${chevronPath(cx, 448, katW, T, rise)}" fill="${theme.kat}"/>`,
-    brick(cx, 640, W, T, theme.don),
-    `<rect x="${cx - 1}" y="${640 - T / 2}" width="2" height="${T}" fill="${theme.ground}"/>`,
-    // the gate
-    cell(0, 0),
-    cell(1, 0),
-    cell(0, 1),
-    cell(1, 1),
+    disc(300, d, theme.kat),
+    disc(600, D, theme.don),
+    `<rect x="${cx - 1}" y="${600 - D / 2}" width="2" height="${D}" fill="${theme.ground}"/>`,
+    // the judgement line and its ring
+    `<line x1="${x0}" y1="${lead + 64}" x2="${x0 + W}" y2="${lead + 64}" stroke="${theme.textDim}" stroke-width="4"/>`,
+    `<circle cx="${cx}" cy="${lead + 64}" r="${D / 2}" fill="none" stroke="${theme.textDim}" stroke-width="${stroke}"/>`,
     '</svg>',
     '',
   ].join('\n');

@@ -67,17 +67,19 @@ export const LIGHT: Theme = {
 
 export const THEMES: Record<Theme['name'], Theme> = { dark: DARK, light: LIGHT };
 
-/** Shape law (DESIGN §2). Ratios of the track width W or note thickness N. */
+/** Shape law (DESIGN §2). Ratios of the track width W, the lead distance, or the unit N. */
 export const SHAPE = {
-  /** Corner radius = shortest side × this. */
+  /** Corner radius = shortest side × this (bricks: touch zones, bodies). */
   radius: 1 / 8,
-  /** N = W × this. */
+  /** Unit N = W × this: spawn margin, judgement offsets, roll/spinner body thickness. */
   noteThickness: 1 / 16,
-  /** Regular note width = W × this, centred. Big notes span W. */
-  noteWidth: 0.5,
-  /** Kat chevron rise toward the spawn side, in units of N. */
-  katPeak: 1,
-  /** Gate cell gap in units of N. Cells are W/2 × N. */
+  /** Regular note diameter = lead distance (spawn edge → seam, px) × this. */
+  circle: 0.07,
+  /** Big note diameter = regular diameter × this. */
+  bigCircle: 1.55,
+  /** Seam ring stroke and burst outline stroke = regular diameter × this. */
+  ringStroke: 0.06,
+  /** Gate gap in units of N (the seam sits in the middle of the portrait gate rect). */
   gateGap: 1 / 8,
   /** Hit push toward the gate, in units of N. */
   hitPush: 0.5,

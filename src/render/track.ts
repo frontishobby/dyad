@@ -17,6 +17,7 @@ import { keyHand, keyKind, partnerKey } from '../core/types.ts';
 import { MOTION, SHAPE, TYPE, hexToNumber, type Theme } from '../design/tokens.ts';
 import { localFrame, localToScreen, nearClipPx, seamPosition, trackNearPx, type Vec2 } from './layout.ts';
 import {
+  bigDiameter,
   brickContext,
   buildNoteContexts,
   burstContext,
@@ -24,7 +25,9 @@ import {
   dividerContext,
   instance,
   lineContext,
+  noteDiameter,
   rectContext,
+  ringContext,
   silhouetteContext,
   type NoteContexts,
 } from './shapes.ts';
@@ -40,10 +43,11 @@ const PRESS_ALPHA = 0.4;
 const OK_ALPHA = 0.6;
 /** Big note awaiting its partner: the hand that already landed is dimmed to this. */
 const LANDED_HALF_ALPHA = 0.35;
-/** Notes are placed this many N beyond the spawn edge so they slide in under the mask. */
-const SPAWN_MARGIN_N = 2;
-/** Touch-zone silhouette width as a fraction of the cell width. */
-const SILHOUETTE_FRACTION = 0.22;
+/** Notes are placed this many N beyond the spawn edge (plus the big radius) so they slide in under the mask. */
+const SPAWN_MARGIN_N = 1;
+/** Touch-zone silhouette diameter as a fraction of the cell's shorter side, and its alpha in the type colour. */
+const SILHOUETTE_FRACTION = 0.36;
+const SILHOUETTE_ALPHA = 0.5;
 /** Judgement word: landscape sits this far above the track band, at the seam x. */
 const JUDGEMENT_ABOVE_PX = 40;
 /** Judgement word: portrait sits this many N on the spawn side of the seam, over the lane. */
@@ -392,8 +396,9 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   const spans: Span[] = [];
   const spanFlashAt = new Float64Array(chart.rolls.length + chart.spinners.length).fill(-Infinity);
   const spanTmp: Vec2 = { x: 0, y: 0 };
-  /** The judgement line and its judgement flash. */
+  /** The judgement line, the receptor ring on it (big-note size) and the ring's judgement flash. */
   let seamLine: Graphics | null = null;
+  let seamRing: Graphics | null = null;
   let seamLit: Graphics | null = null;
   let seamKind = LIT_NONE;
   let seamAt = -Infinity;
@@ -412,8 +417,11 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   let N = layout.N;
   let W = layout.W;
   let leadPx = layout.leadPx;
+  /** Regular and big note diameters (DESIGN §2: from the lead distance). */
+  let d = noteDiameter(leadPx);
+  let D = bigDiameter(leadPx);
   let pxPerMs = leadPx / leadMs;
-  let farPx = leadPx + SPAWN_MARGIN_N * N;
+  let farPx = leadPx + D / 2 + SPAWN_MARGIN_N * N;
   let farMs = farPx / pxPerMs;
   let missTravelPx = SHAPE.missTravel * N;
   let missTravelMs = missTravelPx / pxPerMs;
@@ -424,8 +432,10 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     N = layout.N;
     W = layout.W;
     leadPx = layout.leadPx;
+    d = noteDiameter(leadPx);
+    D = bigDiameter(leadPx);
     pxPerMs = leadPx / leadMs;
-    farPx = leadPx + SPAWN_MARGIN_N * N;
+    farPx = leadPx + D / 2 + SPAWN_MARGIN_N * N;
     farMs = farPx / pxPerMs;
     missTravelPx = SHAPE.missTravel * N;
     missTravelMs = missTravelPx / pxPerMs;
@@ -492,8 +502,9 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     }
     destroySpans();
     seamLine?.destroy();
+    seamRing?.destroy();
     seamLit?.destroy();
-    seamLine = seamLit = null;
+    seamLine = seamRing = seamLit = null;
     seamKind = LIT_NONE;
     for (const g of ghostRegular) g.destroy();
     ghostRegular.length = 0;
@@ -542,8 +553,8 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     bandBg.tint = C.surface;
     bgLayer.addChild(bandBg, new Graphics({ context: dividerCtx }));
 
-    // Hit bursts: the four outlines, and a pool of instances that swap between them.
-    burstCtx = [burstContext('d', false, W, N), burstContext('k', false, W, N), burstContext('d', true, W, N), burstContext('k', true, W, N)];
+    // Hit bursts: the regular and big outlines, and a pool of instances that swap between them.
+    burstCtx = [burstContext(d, d * SHAPE.ringStroke), burstContext(D, d * SHAPE.ringStroke)];
     for (let i = 0; i < BURST_POOL; i++) {
       const g = new Graphics({ context: burstCtx[0] });
       g.visible = false;
@@ -551,16 +562,16 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
       bursts.push(g);
     }
 
-    // Notes are clipped to [spawn edge, near clip].
+    // Notes are clipped to [spawn edge, near clip]; sideways the mask allows the big disc.
     const nearClip = nearClipPx(layout);
-    const maskCtx = rectContext(-N, -leadPx, W + N * 2, leadPx - nearClip, C.ground);
+    const maskCtx = rectContext(-D, -leadPx, W + D * 2, leadPx - nearClip, C.ground);
     staticContexts.push(maskCtx);
     noteMask = new Graphics({ context: maskCtx });
     world.addChild(noteMask);
     noteLayer.mask = noteMask;
 
     // Note contexts and pools.
-    noteCtx = buildNoteContexts(W, N, C.ground);
+    noteCtx = buildNoteContexts(d, D, C.ground);
     donPool = makeRegularPool(noteCtx.don, noteLayer, 0);
     katPool = makeRegularPool(noteCtx.kat, noteLayer, 0);
     bigDonPool = makeBigPool(noteCtx.bigDonL, noteCtx.bigDonR, noteCtx.seam, noteLayer, 0);
@@ -573,17 +584,24 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     beatPool = makeRegularPool(beatCtx, lineLayer, 0);
     barPool = makeRegularPool(barCtx, lineLayer, 0);
 
-    // The gate is a judgement line across the width axis in both orientations
-    // (local y = 0 is the seam), lit white on a Great and dim on an OK.
+    // The gate: a thin judgement line across the width axis in both
+    // orientations (local y = 0 is the seam) and, centred on it, an empty ring
+    // of the big-note diameter that the notes pass through (taiko's receptor).
+    // The ring flashes white on a Great and dim on an OK.
     {
       const lineCtx = rectContext(0, -SEAM_LINE_PX / 2, W, SEAM_LINE_PX, 0xffffff);
-      const litCtx = rectContext(0, -SEAM_LIT_PX / 2, W, SEAM_LIT_PX, 0xffffff);
-      staticContexts.push(lineCtx, litCtx);
+      const ringCtx = ringContext(D, d * SHAPE.ringStroke);
+      const litCtx = ringContext(D, d * SHAPE.ringStroke * 2);
+      staticContexts.push(lineCtx, ringCtx, litCtx);
       seamLine = new Graphics({ context: lineCtx });
       seamLine.tint = C.textDim; // the beat pulse lifts it toward `text`
+      seamRing = new Graphics({ context: ringCtx });
+      seamRing.position.set(W / 2, 0);
+      seamRing.tint = C.textDim;
       seamLit = new Graphics({ context: litCtx });
+      seamLit.position.set(W / 2, 0);
       seamLit.visible = false;
-      gateLayer.addChild(seamLine, seamLit);
+      gateLayer.addChild(seamLine, seamRing, seamLit);
       // Pressed-key ghosts on the seam: one hand → the regular shape centred, both → the big shape.
       const nc = noteCtx as NoteContexts;
       const kinds: [GraphicsContext, GraphicsContext, GraphicsContext][] = [
@@ -613,7 +631,7 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
         const r = tz[key];
         const baseCtx = brickContext(r.w, r.h, C.raised);
         const litCtx = brickContext(r.w, r.h, 0xffffff);
-        const silCtx = silhouetteContext(keyKind(key), r.w * SILHOUETTE_FRACTION, C.faint);
+        const silCtx = silhouetteContext(Math.min(r.w, r.h) * SILHOUETTE_FRACTION);
         staticContexts.push(baseCtx, litCtx, silCtx);
         const base = new Graphics({ context: baseCtx });
         const lit = new Graphics({ context: litCtx });
@@ -622,6 +640,9 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
         lit.position.set(r.x, r.y);
         lit.visible = false;
         silhouette.position.set(r.x + r.w / 2, r.y + r.h / 2);
+        // The type is the colour (DESIGN §2): a dim disc of it says what this zone hits.
+        silhouette.tint = TYPE_COLOR[kindIndex(keyKind(key))] as number;
+        silhouette.alpha = SILHOUETTE_ALPHA;
         zoneLayer.addChild(base, lit, silhouette);
         zones.push({ base, lit, silhouette, type: kindIndex(keyKind(key)) });
       }
@@ -839,7 +860,7 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     const i = burstHead;
     burstHead = (burstHead + 1) % BURST_POOL;
     const g = bursts[i];
-    const ctx = burstCtx[kind + (big ? 2 : 0)];
+    const ctx = burstCtx[big ? 1 : 0];
     if (!g || !ctx) return;
     g.context = ctx;
     g.position.set(W / 2, 0);
@@ -884,7 +905,9 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
         bar = lines.bar[i] === 1;
       }
     }
-    if (seamLine) seamLine.tint = lerpColor(C.textDim, C.text, bar ? pulse : pulse * BEAT_PULSE_FRACTION);
+    const lineTint = lerpColor(C.textDim, C.text, bar ? pulse : pulse * BEAT_PULSE_FRACTION);
+    if (seamLine) seamLine.tint = lineTint;
+    if (seamRing) seamRing.tint = lineTint;
     if (bandBg) bandBg.tint = lerpColor(C.surface, C.raised, bar ? pulse * BAND_PULSE : 0);
   }
 
@@ -909,11 +932,11 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
    * take the whole width and get a countdown label. Bodies sit under the notes.
    */
   function buildSpans(): void {
-    const build = (kind: 'roll' | 'spinner', index: number, t: number, end: number, width: number, tint: number): void => {
-      const length = Math.max(N, (end - t) * pxPerMs);
+    const build = (kind: 'roll' | 'spinner', index: number, t: number, end: number, width: number, radius: number, tint: number): void => {
+      const length = Math.max(width, (end - t) * pxPerMs);
       const x = (W - width) / 2;
       const ctx = new GraphicsContext();
-      ctx.roundRect(x, -length, width, length, Math.min(width, N) * SHAPE.radius).fill(0xffffff);
+      ctx.roundRect(x, -length, width, length, radius).fill(0xffffff);
       const g = new Graphics({ context: ctx });
       g.tint = tint;
       g.visible = false;
@@ -930,8 +953,9 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
       }
       spans.push({ kind, index, t, end, g, ctx, label });
     };
-    chart.rolls.forEach((r, i) => build('roll', i, r.t, r.end, r.big ? W : W * SHAPE.noteWidth, C.raised));
-    chart.spinners.forEach((sp, i) => build('spinner', i, sp.t, sp.end, W, C.line));
+    // Rolls are capsules as wide as the note they start with; spinners span the whole width.
+    chart.rolls.forEach((r, i) => build('roll', i, r.t, r.end, r.big ? D : d, (r.big ? D : d) / 2, C.raised));
+    chart.spinners.forEach((sp, i) => build('spinner', i, sp.t, sp.end, W, Math.min(W, N) * SHAPE.radius, C.line));
   }
 
   function placeSpans(songMs: number): void {
@@ -1014,9 +1038,11 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
    */
   function updateSeam(songMs: number): void {
     if (!seamLit) return;
-    if (seamLine) {
+    {
       const m = (songMs - missAt) / MOTION.cellDecay;
-      seamLine.alpha = m >= 0 && m < 1 && !reducedMotion ? SEAM_MISS_ALPHA + (1 - SEAM_MISS_ALPHA) * m : 1;
+      const alpha = m >= 0 && m < 1 && !reducedMotion ? SEAM_MISS_ALPHA + (1 - SEAM_MISS_ALPHA) * m : 1;
+      if (seamLine) seamLine.alpha = alpha;
+      if (seamRing) seamRing.alpha = alpha;
     }
     const d = (songMs - seamAt) / MOTION.cellDecay;
     if (seamKind === LIT_NONE || d >= 1 || d < 0 || reducedMotion) {

@@ -24,4 +24,4 @@ export {
   PORTRAIT_SPACING,
 } from './layout.ts';
 export type { LocalFrame, Logical, Vec2 } from './layout.ts';
-export { brickPoints, chevronPoints, mPoints } from './shapes.ts';
+export { noteDiameter, bigDiameter } from './shapes.ts';
