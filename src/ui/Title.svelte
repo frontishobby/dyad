@@ -359,7 +359,10 @@
   .carousel {
     position: relative;
     width: 100%;
-    overflow: hidden;
+    /* Clip only sideways: the side jackets run off the edges, but the centre
+       jacket's outline and glow must not be cut at the top and bottom. */
+    overflow-x: clip;
+    overflow-y: visible;
     touch-action: pan-y;
     user-select: none;
     -webkit-user-select: none;
