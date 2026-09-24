@@ -68,6 +68,8 @@
   const RESUME_COUNT_IN_MS = 1000;
   /** Landscape: the key guide (which key is which) stays this long after the first start. */
   const KEY_GUIDE_MS = 3000;
+  /** Silence before the song so the first notes are seen coming (PLAN §7). */
+  const LEAD_IN_MS = 3000;
   /** Effects (last hit vanish, cell decay) get this long before leaving. */
   const END_GRACE_MS = 600;
   /** When the audio ends with notes still pending, they are settled with a tick this far ahead. */
@@ -411,7 +413,7 @@
 
   function start(): void {
     if (phase !== 'ready' || !player || !loop) return;
-    player.start({ audio: settings.value.audioOffset + song.audioOffset });
+    player.start({ audio: settings.value.audioOffset + song.audioOffset, leadInMs: LEAD_IN_MS });
     playing = true;
     phase = 'playing';
     loop.start();

@@ -179,8 +179,10 @@ Widget API 는 폴링 기반이라 수백 ms 지터, Web Audio 접근 불가, �
 
 ### 시계
 ```ts
-// 시작: 즉시 start 하지 않고 살짝 뒤 시각을 예약해 시작 지터 제거
-const startAt = ctx.currentTime + 0.1;
+// 시작: 즉시 start 하지 않고 살짝 뒤 시각을 예약해 시작 지터 제거.
+// 플레이 화면은 여기에 3초 리드인(무음)을 더한다: songMs 가 −3100 부터 올라오며
+// 첫 노트가 미리 흘러 들어오고, 키 가이드(3초)와 같이 끝난다
+const startAt = ctx.currentTime + 0.1 + leadInMs / 1000;
 source.start(startAt);
 
 // 매 프레임 (렌더용)

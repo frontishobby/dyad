@@ -189,6 +189,21 @@ describe('createSongPlayer', () => {
       expect(player.songMs()).toBeCloseTo(2250 - 20, 9);
     });
 
+    it('leadInMs delays the source and counts the clock up from −(leadIn + 100)', async () => {
+      const player = await loadedPlayer(ctx);
+      ctx.currentTime = 5;
+      player.start({ audio: 20, leadInMs: 3000 });
+      expect(ctx.lastSource.startedAt).toBeCloseTo(5 + 0.1 + 3, 9);
+      expect(player.songMs()).toBeCloseTo(-3100 - 20, 9);
+      ctx.currentTime = 8.1;
+      expect(player.songMs()).toBeCloseTo(-20, 9); // the first sample plays now
+      ctx.currentTime = 9.1;
+      expect(player.songMs()).toBeCloseTo(1000 - 20, 9);
+      // Non-finite or negative lead-ins are ignored.
+      player.start({ audio: 0, leadInMs: -500 });
+      expect(ctx.lastSource.startedAt).toBeCloseTo(9.1 + 0.1, 9);
+    });
+
     it('applies a negative audio offset in the other direction', async () => {
       const player = await loadedPlayer(ctx);
       ctx.currentTime = 1;

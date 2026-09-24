@@ -22,10 +22,12 @@ export interface SongPlayer {
   load(urls: readonly string[]): Promise<void>;
 
   /**
-   * Schedule playback at ctx.currentTime + 0.1 (never `start()` immediately).
-   * `offsets.audio` is applied inside songMs().
+   * Schedule playback at ctx.currentTime + 0.1 + leadInMs/1000 (never
+   * `start()` immediately). `offsets.audio` is applied inside songMs().
+   * `leadInMs` (default 0) is silence before the song during which songMs()
+   * is negative and the first notes scroll in.
    */
-  start(offsets: { audio: number }): void;
+  start(offsets: { audio: number; leadInMs?: number }): void;
 
   /** ctx.suspend() / ctx.resume(): the clock pauses with the audio. */
   pause(): Promise<void>;

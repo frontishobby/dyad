@@ -96,7 +96,7 @@ class SongPlayerImpl implements SongPlayer {
     );
   }
 
-  start(offsets: { audio: number }): void {
+  start(offsets: { audio: number; leadInMs?: number }): void {
     this.assertAlive();
     const buffer = this.buffer;
     if (!buffer) {
@@ -116,7 +116,11 @@ class SongPlayerImpl implements SongPlayer {
       for (const cb of [...this.endedCallbacks]) cb();
     };
 
-    const startAt = this.ctx.currentTime + START_LEAD_S;
+    // The lead-in is silence before the first sample; it is part of the clock,
+    // so songMs() counts up from −(leadIn + START_LEAD) and notes scroll in.
+    const leadIn = offsets.leadInMs;
+    const leadInS = leadIn !== undefined && Number.isFinite(leadIn) && leadIn > 0 ? leadIn / 1000 : 0;
+    const startAt = this.ctx.currentTime + START_LEAD_S + leadInS;
     source.start(startAt);
 
     this.source = source;
