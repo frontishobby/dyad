@@ -113,8 +113,11 @@
     min-height: 100dvh;
     background: var(--ground);
   }
+  /* Screens carry margin-inline: auto (for max-width centring), which in a flex
+     column stops them stretching sideways; give them the full width explicitly. */
   .shell > :global(*) {
     flex: 1 0 auto;
+    width: 100%;
   }
   /* Percentage heights inside the frame resolve against its fixed height. */
   .frame > :global(*) {
