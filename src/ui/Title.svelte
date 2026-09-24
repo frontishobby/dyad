@@ -12,9 +12,10 @@
    * Browsing: ← → (songs), ↑ ↓ (tier), Enter (play), wheel, and on touch a
    * horizontal swipe. Tapping a side jacket moves to it; the centre one plays.
    */
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { Spring } from 'svelte/motion';
   import { backend } from '../app/backend.ts';
+  import { createPreviewPlayer, type PreviewPlayer } from '../audio/preview.ts';
   import {
     createWheelStepper,
     jacketSize as jacketSizeFor,
@@ -47,6 +48,8 @@
   let tier = $state<Tier>('normal');
 
   let viewportW = $state(typeof window === 'undefined' ? 1280 : window.innerWidth);
+  /** Height the carousel row was given by the grid; the jacket never outgrows it (no vertical scroll). */
+  let carouselRoomH = $state(0);
   const finePointer = $derived(typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches);
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -56,7 +59,7 @@
   const song = $derived(songs[index]);
   const chart = $derived(song ? nearestChart(song.charts, tier) : null);
   const best = $derived(chart ? (bests[chart.hash] ?? null) : null);
-  const jacketPx = $derived(jacketSizeFor(viewportW));
+  const jacketPx = $derived(carouselRoomH > 0 ? Math.min(jacketSizeFor(viewportW), carouselRoomH) : jacketSizeFor(viewportW));
   const ratio = $derived(jacketPx / 340);
   /** How far the spring still has to travel, in slots. */
   const slide = $derived(pos.target - pos.current);
@@ -99,6 +102,35 @@
 
   onMount(() => {
     void load();
+  });
+
+  // ─── preview ─────────────────────────────────────────────────────────────
+  // The selected song's chorus, faded in once the carousel has settled on it.
+  // Audio is already unlocked (the boot screen's gesture), so this can start
+  // without another tap; if it cannot, the player just stays silent.
+  let preview: PreviewPlayer | null = null;
+  let previewTimer: ReturnType<typeof setTimeout> | undefined;
+  const PREVIEW_SETTLE_MS = 350;
+
+  $effect(() => {
+    const current = song;
+    if (!current || status !== 'ready') return;
+    if (previewTimer !== undefined) clearTimeout(previewTimer);
+    previewTimer = setTimeout(() => {
+      previewTimer = undefined;
+      try {
+        preview ??= createPreviewPlayer();
+        preview.play(songUrl(current, current.audio), current.previewMs);
+      } catch (err) {
+        console.warn('dyad: preview unavailable', err);
+      }
+    }, PREVIEW_SETTLE_MS);
+  });
+
+  onDestroy(() => {
+    if (previewTimer !== undefined) clearTimeout(previewTimer);
+    preview?.destroy();
+    preview = null;
   });
 
   // ─── browsing ────────────────────────────────────────────────────────────
@@ -234,6 +266,7 @@
   {:else if songs.length === 0}
     <p class="dim state">아직 곡이 없습니다.</p>
   {:else if song && chart}
+    <div class="carousel-room" bind:clientHeight={carouselRoomH}>
     <div
       class="carousel"
       style:height="{jacketPx}px"
@@ -266,6 +299,7 @@
           <Jacket src={songUrl(entry, entry.jacket)} alt="" fill />
         </button>
       {/each}
+    </div>
     </div>
 
     {#key song.id}
@@ -330,12 +364,23 @@
 </main>
 
 <style>
+  /* Fills its box exactly (the 1280×720 frame, or the portrait viewport) and never
+     scrolls: the carousel row takes whatever height the others leave, and the
+     jacket is sized to that room. */
   .select {
     display: grid;
-    grid-template-rows: auto auto auto auto auto;
-    align-content: start;
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+    align-content: stretch;
     gap: 16px;
-    min-height: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .carousel-room {
+    display: grid;
+    align-content: center;
+    min-height: 0;
   }
 
   .head {

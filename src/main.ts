@@ -1,8 +1,12 @@
 import { mount } from 'svelte';
 import './app.css';
 import App from './App.svelte';
+import { fitStandaloneWindow, registerServiceWorker } from './app/pwa.ts';
 
 const target = document.getElementById('app');
 if (!target) throw new Error('#app not found');
 
 export default mount(App, { target });
+
+registerServiceWorker();
+fitStandaloneWindow();

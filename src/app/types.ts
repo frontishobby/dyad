@@ -48,6 +48,8 @@ export interface SongMeta {
   audioOffset: number;
   /** Source audio length, ms (from the WAV header at build time). */
   durationMs: number;
+  /** Where the song-select preview starts, ms: just before the densest stretch of the hardest chart. */
+  previewMs: number;
   /** Content-hashed file names relative to the song folder. */
   audio: string;
   jacket: string;

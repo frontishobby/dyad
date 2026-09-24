@@ -12,6 +12,7 @@ function song(over: Partial<SongMeta> = {}): SongMeta {
     palette: ['#123456'],
     audioOffset: 0,
     durationMs: 72800,
+    previewMs: 20000,
     audio: 'audio.abc.webm',
     jacket: 'jacket.abc.avif',
     jacketSm: 'jacket-sm.abc.avif',

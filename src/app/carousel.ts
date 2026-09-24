@@ -7,8 +7,8 @@
  */
 import { TIERS, type SongChartRef, type Tier } from './types.ts';
 
-/** Under this many songs the carousel clamps at the ends instead of wrapping (a cover would show twice). */
-export const WRAP_MIN = 7;
+/** From this many songs the carousel wraps around (below it there is nothing to wrap to). */
+export const WRAP_MIN = 2;
 
 /** Reference jacket size the STOPS are measured against. */
 export const JACKET_REF_PX = 340;
@@ -70,7 +70,7 @@ export function shortest(delta: number, count: number): number {
   return (((delta % n) + n + n / 2) % n) - n / 2;
 }
 
-/** Next index after moving `delta` slots: wrapping, or clamped when there are few songs. */
+/** Next index after moving `delta` slots: wrapping (a single song stays put). */
 export function stepIndex(index: number, delta: number, count: number): number {
   if (count <= 0) return 0;
   if (wraps(count)) return (((index + delta) % count) + count) % count;

@@ -293,6 +293,33 @@ export function starsFor(osuText: string): number {
   }
 }
 
+/** Preview window length and how far before the densest stretch it starts, ms. */
+export const PREVIEW_WINDOW_MS = 12_000;
+export const PREVIEW_LEAD_MS = 1_500;
+
+/**
+ * Where the song-select preview starts: PREVIEW_LEAD_MS before the densest
+ * PREVIEW_WINDOW_MS stretch of notes (the chorus, in practice), clamped so the
+ * slice fits inside the song. Deterministic; ties go to the earlier window.
+ */
+export function previewStartMs(notes: readonly { t: number }[], durationMs: number): number {
+  const ts = notes.map((n) => n.t).sort((a, b) => a - b);
+  const latestStart = Math.max(0, durationMs - PREVIEW_WINDOW_MS);
+  if (ts.length === 0) return Math.min(latestStart, Math.round(durationMs * 0.3));
+  let best = 0;
+  let bestStart = ts[0] as number;
+  let head = 0;
+  for (let tail = 0; tail < ts.length; tail++) {
+    while ((ts[tail] as number) - (ts[head] as number) > PREVIEW_WINDOW_MS) head++;
+    const n = tail - head + 1;
+    if (n > best) {
+      best = n;
+      bestStart = ts[head] as number;
+    }
+  }
+  return Math.max(0, Math.min(latestStart, bestStart - PREVIEW_LEAD_MS));
+}
+
 /**
  * Level 1–10 from the star rating (src/app/types.ts documents the mapping):
  * clamp(1, 10, round(stars × 1.6)) — Kantan ~2★ → 3, Oni ~4.5★ → 7, 6★+ → 10.
@@ -433,6 +460,7 @@ async function buildSong(id: string): Promise<SongMeta> {
     palette,
     audioOffset: source.audioOffset ?? 0,
     durationMs,
+    previewMs: previewStartMs(chart.notes, durationMs),
     audio: audioName,
     jacket: names.jacket,
     jacketSm: names.jacketSm,

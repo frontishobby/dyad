@@ -53,6 +53,7 @@ export function isSongMeta(v: unknown): v is SongMeta {
     isStringArray(v.palette) &&
     typeof v.audioOffset === 'number' &&
     typeof v.durationMs === 'number' &&
+    typeof v.previewMs === 'number' &&
     typeof v.audio === 'string' &&
     typeof v.jacket === 'string' &&
     typeof v.jacketSm === 'string' &&

@@ -57,14 +57,18 @@ describe('wrapping', () => {
     expect(shortest(-6, 7)).toBe(1);
     expect(shortest(3, 7)).toBe(3);
     expect(shortest(4, 8)).toBe(-4);
-    expect(shortest(6, 3)).toBe(6);
+    expect(shortest(6, 3)).toBe(0);
+    expect(shortest(2, 3)).toBe(-1);
+    expect(shortest(1, 1)).toBe(1); // a lone song never wraps
   });
 
-  it('stepIndex wraps or clamps', () => {
+  it('stepIndex wraps in both directions, from two songs up', () => {
     expect(stepIndex(6, 1, 7)).toBe(0);
     expect(stepIndex(0, -1, 7)).toBe(6);
-    expect(stepIndex(2, 1, 3)).toBe(2);
-    expect(stepIndex(0, -1, 3)).toBe(0);
+    expect(stepIndex(2, 1, 3)).toBe(0);
+    expect(stepIndex(0, -1, 3)).toBe(2);
+    expect(stepIndex(1, 1, 2)).toBe(0);
+    expect(stepIndex(0, 1, 1)).toBe(0);
     expect(stepIndex(5, 1, 0)).toBe(0);
   });
 });

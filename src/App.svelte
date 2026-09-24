@@ -109,12 +109,14 @@
   .shell {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
     background: var(--ground);
   }
-  /* Screens carry margin-inline: auto (for max-width centring), which in a flex
-     column stops them stretching sideways; give them the full width explicitly. */
+  /* Screens fill the shell (100 % resolves against its definite height); a taller
+     one (settings, result) overflows it and the page scrolls. Screens carry
+     margin-inline: auto for max-width centring, which in a flex column stops
+     them stretching sideways, so the width is explicit. */
   .shell > :global(*) {
     flex: 1 0 auto;
     width: 100%;

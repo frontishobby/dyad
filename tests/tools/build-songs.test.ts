@@ -7,7 +7,18 @@ import type { SongIndex, SongMeta } from '../../src/app/types.ts';
 import { chartHash } from '../../src/core/hash.ts';
 import type { Chart } from '../../src/core/types.ts';
 import { DARK, hexToRgb } from '../../src/design/tokens.ts';
-import { JACKET_NAMES, dedupeHitObjects, discoverCharts, extractPalette, findJacket, levelFor, starsFor } from '../../tools/build-songs.ts';
+import {
+  JACKET_NAMES,
+  PREVIEW_LEAD_MS,
+  PREVIEW_WINDOW_MS,
+  dedupeHitObjects,
+  discoverCharts,
+  extractPalette,
+  findJacket,
+  levelFor,
+  previewStartMs,
+  starsFor,
+} from '../../tools/build-songs.ts';
 import { patternEvents, renderOsu } from '../../tools/gen-fixture.ts';
 import { jacketSvg, renderJacketPng } from '../../tools/gen-fixture.ts';
 import { hash8 } from '../../tools/lib/fsx.ts';
@@ -65,10 +76,12 @@ describe('committed public/songs output', () => {
     expect(ids).toEqual(onDisk.sort());
     for (const [i, { meta }] of songs.entries()) {
       expect(index.songs[i]).toEqual(meta);
-      expect(Object.keys(meta)).toEqual(['id', 'title', 'artist', 'palette', 'audioOffset', 'durationMs', 'audio', 'jacket', 'jacketSm', 'charts']);
+      expect(Object.keys(meta)).toEqual(['id', 'title', 'artist', 'palette', 'audioOffset', 'durationMs', 'previewMs', 'audio', 'jacket', 'jacketSm', 'charts']);
       expect(meta.id).toMatch(/^[a-z0-9][a-z0-9-]*$/);
       expect(meta.title).not.toBe('');
       expect(meta.durationMs).toBeGreaterThan(0);
+      expect(meta.previewMs).toBeGreaterThanOrEqual(0);
+      expect(meta.previewMs).toBeLessThan(meta.durationMs);
       expect(meta.palette).toHaveLength(3);
     }
   });
@@ -126,6 +139,18 @@ describe('committed public/songs output', () => {
       // the legacy single-chart file is gone
       await expect(stat(join(dir, 'chart.json'))).rejects.toThrow();
     }
+  });
+
+  it('previewStartMs: PREVIEW_LEAD_MS before the densest PREVIEW_WINDOW_MS stretch, clamped into the song', () => {
+    const sparse = Array.from({ length: 10 }, (_, i) => ({ t: 1000 + i * 2000 })); // 0.5/s
+    const dense = Array.from({ length: 40 }, (_, i) => ({ t: 60000 + i * 250 })); // 4/s from 60 s
+    expect(previewStartMs([...sparse, ...dense], 120000)).toBe(60000 - PREVIEW_LEAD_MS);
+    // Near the end the slice is pulled back so PREVIEW_WINDOW_MS still fits.
+    expect(previewStartMs(dense, 65000)).toBe(65000 - PREVIEW_WINDOW_MS);
+    // No notes: 30 % in.
+    expect(previewStartMs([], 100000)).toBe(30000);
+    // Order of input does not matter.
+    expect(previewStartMs([...dense].reverse(), 120000)).toBe(previewStartMs(dense, 120000));
   });
 
   it('levelFor: round(stars × 1.6), clamped to 1..10', () => {

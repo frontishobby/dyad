@@ -11,6 +11,7 @@ made for taiko (by hand or by a model) plays here as-is.
 - Touch (portrait): four pads at the bottom of the screen.
 - Judgement is Great (±30 ms), OK (±50 ms), Miss. Drumrolls and spinners are bonus objects.
 - Records and replays are kept locally, keyed by the chart's content hash.
+- Installable as a PWA (offline app shell, songs cached as you play them). On a desktop the installed window sizes itself to the 1280×720 stage.
 
 ## Making charts
 
