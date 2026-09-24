@@ -250,11 +250,22 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+/**
+ * A timing segment shorter than this is a generator blip (a stretched beat
+ * fitted as its own BPM), not a tempo the player would notice: it is left
+ * out of the displayed range. The last segment runs to the end and always counts.
+ */
+export const MIN_BPM_SEGMENT_MS = 2000;
+
 function bpmRange(timing: readonly ChartTiming[]): [number, number] {
   if (timing.length === 0) return [0, 0];
+  const lasting = timing.filter((p, i) => {
+    const next = timing[i + 1];
+    return next === undefined || next.t - p.t >= MIN_BPM_SEGMENT_MS;
+  });
   let min = Infinity;
   let max = -Infinity;
-  for (const p of timing) {
+  for (const p of lasting.length > 0 ? lasting : timing) {
     const bpm = 60000 / p.beatLength;
     if (bpm < min) min = bpm;
     if (bpm > max) max = bpm;

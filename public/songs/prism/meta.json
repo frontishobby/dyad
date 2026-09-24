@@ -17,40 +17,43 @@
       "tier": "easy",
       "name": "Easy",
       "file": "chart.easy.json",
-      "hash": "55accb0f3cfad4d467eea1664905bf14885e915ee7891d3d93c0f829a71527ef",
+      "hash": "c8c1fd8648e0be2f02d629870b8ff83753b8d40ce32939180f7abf8cb1267b0f",
       "od": 4,
       "bpm": [
-        154,
-        188
+        169,
+        173
       ],
-      "notes": 265,
-      "level": 4
+      "notes": 343,
+      "stars": 2.16,
+      "level": 3
     },
     {
       "tier": "normal",
       "name": "Normal",
       "file": "chart.normal.json",
-      "hash": "c599dc181a373c8b433c13f55baeeb8a8a1e8b08300e4eb892d86ec7fc946c70",
+      "hash": "3dcbf72129fafe5f5587a3bbec753aae06634e6444b628472614ab388b083d78",
       "od": 5,
       "bpm": [
-        154,
-        188
+        169,
+        172
       ],
-      "notes": 458,
-      "level": 7
+      "notes": 487,
+      "stars": 3.19,
+      "level": 5
     },
     {
       "tier": "hard",
       "name": "Hard",
       "file": "chart.hard.json",
-      "hash": "44f063a9550355684c154bd03d1758d1c1cff8653e93af1b91701c274453c1df",
+      "hash": "2d6ff281f32810a7bbcf4298f261b9c2d69e63c7da4b3494e56e82a23e3fbf07",
       "od": 6,
       "bpm": [
-        154,
-        178
+        168,
+        172
       ],
-      "notes": 783,
-      "level": 10
+      "notes": 728,
+      "stars": 4.29,
+      "level": 7
     }
   ]
 }

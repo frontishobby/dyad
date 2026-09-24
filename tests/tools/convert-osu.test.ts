@@ -253,6 +253,23 @@ describe('convertOsu — timing and meta', () => {
     expect(chart.meta.bpm).toEqual([120, 180]);
   });
 
+  it('bpm range ignores segments shorter than MIN_BPM_SEGMENT_MS (generator blips), but never the last one', async () => {
+    const chart = await convertOsu(
+      osu({
+        timing: [
+          '0,352.941,4,1,0,100,1,0', // 170 bpm for 44 s
+          '44000,289.855,4,1,0,100,1,0', // 207 bpm for 600 ms: a blip
+          '44600,350.877,4,1,0,100,1,0', // 171 bpm to the end
+        ],
+      }),
+    );
+    expect(chart.timing).toHaveLength(3); // the blip stays in the timing (bar lines follow it)
+    expect(chart.meta.bpm).toEqual([170, 171]);
+    // Only short segments: everything counts rather than nothing.
+    const short = await convertOsu(osu({ timing: ['0,400,4,1,0,100,1,0', '500,300,4,1,0,100,1,0', '1000,500,4,1,0,100,1,0'] }));
+    expect(short.meta.bpm).toEqual([120, 120]); // the last segment alone qualifies
+  });
+
   it('keeps the last of two uninherited points at the same time', async () => {
     const chart = await convertOsu(osu({ timing: ['0,400,4,1,0,100,1,0', '0,500,4,1,0,100,1,0'] }));
     expect(chart.timing).toEqual([{ t: 0, beatLength: 500, meter: 4 }]);

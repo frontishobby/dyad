@@ -67,9 +67,11 @@ export interface SongChartRef {
   /** [min, max] BPM. */
   bpm: [number, number];
   notes: number;
+  /** osu!taiko star rating from rosu-pp at build time (no mods), 2 decimals. */
+  stars: number;
   /**
-   * 1–10, shown on the tier tile. Deterministic from the chart at build time:
-   * clamp(1, 10, round(nps × 1.5 + od × 0.3)) with nps = notes / max(1, (lastNote.t − firstNote.t) / 1000).
+   * 1–10, shown on the tier tile. Deterministic from the star rating at build
+   * time: clamp(1, 10, round(stars × 1.6)) — Kantan ~2★ → 3, Oni ~4.5★ → 7, 6★+ → 10.
    */
   level: number;
 }

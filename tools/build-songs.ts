@@ -25,6 +25,7 @@ import { mkdir, readdir, readFile, rename, rm, unlink } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import * as rosu from 'rosu-pp-js';
 import sharp from 'sharp';
 import { tierFromName } from '../src/app/format.ts';
 import { TIERS, type SongChartRef, type SongIndex, type SongMeta, type Tier } from '../src/app/types.ts';
@@ -253,18 +254,31 @@ async function requireFile(path: string): Promise<Uint8Array> {
 }
 
 /**
- * Level 1–10 from note density and OD (src/app/types.ts documents the formula):
- * clamp(1, 10, round(nps × 1.5 + od × 0.3)), nps = notes / max(1, span in seconds).
+ * osu!taiko star rating of a .osu, from rosu-pp (the official difficulty
+ * calculator ported to Rust, here through Wasm). No mods, clock rate 1.
+ * Rounded to 2 decimals so meta.json is stable across float noise.
  */
-export function levelFor(chart: Pick<Chart, 'notes' | 'meta'>): number {
-  const first = chart.notes[0];
-  const last = chart.notes[chart.notes.length - 1];
-  const spanSec = first && last ? Math.max(1, (last.t - first.t) / 1000) : 1;
-  const nps = chart.notes.length / spanSec;
-  return Math.max(1, Math.min(10, Math.round(nps * 1.5 + chart.meta.od * 0.3)));
+export function starsFor(osuText: string): number {
+  const map = new rosu.Beatmap(osuText);
+  try {
+    if (map.mode !== rosu.GameMode.Taiko) map.convert(rosu.GameMode.Taiko);
+    const attrs = new rosu.Difficulty({}).calculate(map);
+    return Math.round(attrs.stars * 100) / 100;
+  } finally {
+    map.free();
+  }
 }
 
-function chartRef(tier: Tier, file: string, chart: Chart): SongChartRef {
+/**
+ * Level 1–10 from the star rating (src/app/types.ts documents the mapping):
+ * clamp(1, 10, round(stars × 1.6)) — Kantan ~2★ → 3, Oni ~4.5★ → 7, 6★+ → 10.
+ */
+export function levelFor(stars: number): number {
+  if (!Number.isFinite(stars)) return 1;
+  return Math.max(1, Math.min(10, Math.round(stars * 1.6)));
+}
+
+function chartRef(tier: Tier, file: string, chart: Chart, stars: number): SongChartRef {
   return {
     tier,
     name: chart.meta.difficulty,
@@ -273,7 +287,8 @@ function chartRef(tier: Tier, file: string, chart: Chart): SongChartRef {
     od: chart.meta.od,
     bpm: [chart.meta.bpm[0], chart.meta.bpm[1]],
     notes: chart.notes.length,
-    level: levelFor(chart),
+    stars,
+    level: levelFor(stars),
   };
 }
 
@@ -342,7 +357,7 @@ async function buildSong(id: string): Promise<SongMeta> {
     const chart = await convertOsu(osuText);
     const chartPath = join(outDir, src.file);
     log((await writeIfChanged(chartPath, serializeChart(chart))) ? 'wrote' : 'unchanged', chartPath);
-    charts.push(chartRef(src.tier, src.file, chart));
+    charts.push(chartRef(src.tier, src.file, chart, starsFor(osuText)));
     chartFiles.add(src.file);
     firstChart ??= chart;
   }

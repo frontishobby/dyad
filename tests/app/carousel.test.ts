@@ -16,7 +16,7 @@ import {
 import type { SongChartRef, Tier } from '../../src/app/types.ts';
 
 function ref(tier: Tier, level = 5): SongChartRef {
-  return { tier, name: tier, file: `chart.${tier}.json`, hash: `h-${tier}`, od: 5, bpm: [150, 150], notes: 100, level };
+  return { tier, name: tier, file: `chart.${tier}.json`, hash: `h-${tier}`, od: 5, bpm: [150, 150], notes: 100, stars: level / 1.6, level };
 }
 
 describe('place', () => {

@@ -131,11 +131,11 @@ public/songs/<id>/
   audio.<hash>.webm
   jacket.<hash>.avif        1024px 정사각
   jacket-sm.<hash>.avif     256px (결과 화면 등 128px 이하 자리; 캐러셀·플레이 HUD 는 1024 원본을 쓴다)
-  meta.json                 { id, title, artist, palette, audioOffset, durationMs, charts: [{ tier, name, file, hash, od, bpm, notes, level }] }
+  meta.json                 { id, title, artist, palette, audioOffset, durationMs, charts: [{ tier, name, file, hash, od, bpm, notes, stars, level }] }
 public/songs/index.json     빌드 시 생성
 ```
 - 난이도는 **easy / normal / hard** 세 단계. 파일명이 단계를 정하고, `.osu` 의 `Version` 은 보조 이름
-- `level` 1~10 은 빌드 시 노트 밀도와 OD 에서 결정적으로 계산 (`src/app/types.ts` 참고)
+- `stars` 는 빌드 시 rosu-pp(공식 난이도 계산기 포팅)로 구한 osu!taiko SR. `level` 1~10 은 `round(stars × 1.6)` 클램프 (`src/app/types.ts` 참고)
 - 파일명 콘텐츠 해시 + `Cache-Control: immutable`
 - `palette` 는 빌드 시 자켓에서 추출 (런타임 추출 금지, 결정적이고 빠름)
 

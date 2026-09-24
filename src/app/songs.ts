@@ -31,6 +31,7 @@ export function isSongChartRef(v: unknown): v is SongChartRef {
     isRecord(v) &&
     isTier(v.tier) &&
     typeof v.name === 'string' &&
+    typeof v.stars === 'number' &&
     typeof v.level === 'number' &&
     typeof v.file === 'string' &&
     v.file.length > 0 &&

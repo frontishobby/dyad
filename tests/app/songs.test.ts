@@ -39,7 +39,7 @@ async function chart(): Promise<Chart> {
 }
 
 function ref(c: Chart, over: Partial<SongChartRef> = {}): SongChartRef {
-  return { tier: 'hard', name: 'Oni', file: 'chart.hard.json', hash: c.hash, od: 5, bpm: [120, 120], notes: 2, level: 7, ...over };
+  return { tier: 'hard', name: 'Oni', file: 'chart.hard.json', hash: c.hash, od: 5, bpm: [120, 120], notes: 2, stars: 4.5, level: 7, ...over };
 }
 
 function jsonResponse(data: unknown, status = 200): Response {
@@ -65,7 +65,7 @@ describe('loadSongIndex', () => {
   it('returns a valid index with charts in tier order', async () => {
     const c = await chart();
     const hard = ref(c);
-    const easy = ref(c, { tier: 'easy', name: 'Easy', file: 'chart.easy.json', level: 3 });
+    const easy = ref(c, { tier: 'easy', name: 'Easy', file: 'chart.easy.json', stars: 2, level: 3 });
     const index = { version: 1, songs: [song({ charts: [hard, easy] })] };
     vi.stubGlobal('fetch', vi.fn(async (url: string) => {
       expect(url).toBe(`${songsBase()}index.json`);
@@ -87,7 +87,7 @@ describe('loadSongIndex', () => {
 
   it('validates chart refs inside songs', () => {
     expect(isSongIndex({ version: 1, songs: [] })).toBe(true);
-    const c: SongChartRef = { tier: 'normal', name: 'Normal', file: 'chart.normal.json', hash: 'h', od: 5, bpm: [1, 2], notes: 3, level: 5 };
+    const c: SongChartRef = { tier: 'normal', name: 'Normal', file: 'chart.normal.json', hash: 'h', od: 5, bpm: [1, 2], notes: 3, stars: 3.1, level: 5 };
     expect(isSongIndex({ version: 1, songs: [song({ charts: [c] })] })).toBe(true);
     expect(isSongIndex({ version: 1, songs: [song({ charts: [{ ...c, hash: '' }] })] })).toBe(false);
     expect(isSongIndex({ version: 1, songs: [song({ charts: [{ ...c, tier: 'oni' as never }] })] })).toBe(false);

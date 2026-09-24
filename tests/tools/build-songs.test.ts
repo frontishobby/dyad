@@ -7,7 +7,8 @@ import type { SongIndex, SongMeta } from '../../src/app/types.ts';
 import { chartHash } from '../../src/core/hash.ts';
 import type { Chart } from '../../src/core/types.ts';
 import { DARK, hexToRgb } from '../../src/design/tokens.ts';
-import { JACKET_NAMES, discoverCharts, extractPalette, findJacket, levelFor } from '../../tools/build-songs.ts';
+import { JACKET_NAMES, discoverCharts, extractPalette, findJacket, levelFor, starsFor } from '../../tools/build-songs.ts';
+import { patternEvents, renderOsu } from '../../tools/gen-fixture.ts';
 import { jacketSvg, renderJacketPng } from '../../tools/gen-fixture.ts';
 import { hash8 } from '../../tools/lib/fsx.ts';
 
@@ -105,6 +106,7 @@ describe('committed public/songs output', () => {
       for (const ref of meta.charts) {
         expect(ref.file).toBe(`chart.${ref.tier}.json`);
         const chart = JSON.parse(await readFile(join(dir, ref.file), 'utf8')) as Chart;
+        const osu = await readFile(join(ROOT, 'songs-src', meta.id, `${ref.tier}.osu`), 'utf8');
         expect(ref).toEqual({
           tier: ref.tier,
           name: chart.meta.difficulty,
@@ -113,7 +115,8 @@ describe('committed public/songs output', () => {
           od: chart.meta.od,
           bpm: chart.meta.bpm,
           notes: chart.notes.length,
-          level: levelFor(chart),
+          stars: starsFor(osu),
+          level: levelFor(ref.stars),
         });
         expect(await chartHash(chart)).toBe(chart.hash);
         expect(ref.level).toBeGreaterThanOrEqual(1);
@@ -125,16 +128,26 @@ describe('committed public/songs output', () => {
     }
   });
 
-  it('levelFor: density and OD, clamped to 1..10', () => {
-    const meta = { title: '', artist: '', difficulty: '', bpm: [150, 150] as [number, number], od: 5, hp: 5 };
-    const notes = (n: number, spanMs: number) =>
-      Array.from({ length: n }, (_, i) => ({ t: Math.round((i * spanMs) / Math.max(1, n - 1)), k: 'd' as const, big: false }));
-    // 2 notes/s at OD 5 → round(3 + 1.5) = 5 (4.5 rounds up)
-    expect(levelFor({ meta, notes: notes(121, 60000) })).toBe(5);
-    expect(levelFor({ meta, notes: notes(1, 0) })).toBe(3);
-    expect(levelFor({ meta, notes: [] })).toBe(2);
-    expect(levelFor({ meta: { ...meta, od: 10 }, notes: notes(600, 60000) })).toBe(10);
-    expect(levelFor({ meta: { ...meta, od: 0 }, notes: notes(2, 60000) })).toBe(1);
+  it('levelFor: round(stars × 1.6), clamped to 1..10', () => {
+    expect(levelFor(2)).toBe(3);
+    expect(levelFor(2.11)).toBe(3);
+    expect(levelFor(2.91)).toBe(5);
+    expect(levelFor(4.51)).toBe(7);
+    expect(levelFor(6)).toBe(10);
+    expect(levelFor(9)).toBe(10);
+    expect(levelFor(0.2)).toBe(1);
+    expect(levelFor(Number.NaN)).toBe(1);
+  });
+
+  it('starsFor: rosu-pp taiko star rating, deterministic, 2 decimals, higher for the denser tier', () => {
+    const events = patternEvents();
+    const hard = renderOsu(events, 'Hard');
+    const a = starsFor(hard);
+    expect(a).toBe(starsFor(hard));
+    expect(a).toBeGreaterThan(0);
+    expect(Math.round(a * 100) / 100).toBe(a);
+    const sparse = renderOsu(events.filter((_, i) => i % 3 === 0), 'Easy');
+    expect(starsFor(sparse)).toBeLessThan(a);
   });
 
   describe('discoverCharts', () => {
