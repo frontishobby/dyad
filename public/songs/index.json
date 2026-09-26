@@ -156,6 +156,58 @@
           "level": 9
         }
       ]
+    },
+    {
+      "id": "tailwind",
+      "title": "Tailwind",
+      "artist": "",
+      "palette": [
+        "#3789E6",
+        "#98C7E9",
+        "#6686A9"
+      ],
+      "audioOffset": 0,
+      "bpm": [
+        125,
+        125
+      ],
+      "durationMs": 107210,
+      "previewMs": 44482,
+      "audio": "audio.10eacfad.webm",
+      "jacket": "jacket.d910d2a5.avif",
+      "jacketSm": "jacket-sm.ae440670.avif",
+      "charts": [
+        {
+          "tier": "easy",
+          "name": "Easy",
+          "file": "chart.easy.json",
+          "hash": "274cc2627e84af0977abd3088c691cf7a09bd08583dfbd9f211254db5212492f",
+          "od": 4,
+          "notes": 173,
+          "stars": 1.28,
+          "level": 2
+        },
+        {
+          "tier": "normal",
+          "name": "Normal",
+          "file": "chart.normal.json",
+          "hash": "15037321e587cd29a002bb58738870131c68bfbdb3d74205a69f08594e48bbaa",
+          "od": 5,
+          "notes": 379,
+          "stars": 2.46,
+          "level": 4
+        },
+        {
+          "tier": "hard",
+          "name": "Hard",
+          "file": "chart.hard.json",
+          "hash": "20c6ef53725fb2dded3b1aad60ce3a7cc416a226df16ae3ba19179526d04614d",
+          "od": 6,
+          "notes": 622,
+          "stars": 3.89,
+          "level": 6
+        }
+      ]
     }
   ]
 }
