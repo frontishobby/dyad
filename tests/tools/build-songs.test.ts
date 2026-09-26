@@ -17,6 +17,7 @@ import {
   findJacket,
   levelFor,
   previewStartMs,
+  songBpm,
   starsFor,
 } from '../../tools/build-songs.ts';
 import { patternEvents, renderOsu } from '../../tools/gen-fixture.ts';
@@ -76,7 +77,7 @@ describe('committed public/songs output', () => {
     expect(ids).toEqual(onDisk.sort());
     for (const [i, { meta }] of songs.entries()) {
       expect(index.songs[i]).toEqual(meta);
-      expect(Object.keys(meta)).toEqual(['id', 'title', 'artist', 'palette', 'audioOffset', 'durationMs', 'previewMs', 'audio', 'jacket', 'jacketSm', 'charts']);
+      expect(Object.keys(meta)).toEqual(['id', 'title', 'artist', 'palette', 'audioOffset', 'bpm', 'durationMs', 'previewMs', 'audio', 'jacket', 'jacketSm', 'charts']);
       expect(meta.id).toMatch(/^[a-z0-9][a-z0-9-]*$/);
       expect(meta.title).not.toBe('');
       expect(meta.durationMs).toBeGreaterThan(0);
@@ -126,7 +127,6 @@ describe('committed public/songs output', () => {
           file: ref.file,
           hash: chart.hash,
           od: chart.meta.od,
-          bpm: chart.meta.bpm,
           notes: chart.notes.length,
           stars: starsFor(osu),
           level: levelFor(ref.stars),
@@ -151,6 +151,13 @@ describe('committed public/songs output', () => {
     expect(previewStartMs([], 100000)).toBe(30000);
     // Order of input does not matter.
     expect(previewStartMs([...dense].reverse(), 120000)).toBe(previewStartMs(dense, 120000));
+  });
+
+  it('songBpm: song.json wins, else every tier must agree', () => {
+    expect(songBpm('x', [158, 158], [[158, 158], [158, 159]])).toEqual([158, 158]);
+    expect(songBpm('x', undefined, [[180, 180], [180, 180], [180, 180]])).toEqual([180, 180]);
+    expect(() => songBpm('x', undefined, [[158, 158], [158, 159]])).toThrow(/set "bpm" in song.json/);
+    expect(() => songBpm('x', undefined, [])).toThrow();
   });
 
   it('levelFor: round(stars × 1.6), clamped to 1..10', () => {

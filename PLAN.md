@@ -125,18 +125,19 @@ interface Chart {
 ```
 songs-src/<id>/             원본 (WAV 는 git 에 넣지 않음)
   easy.osu | normal.osu | hard.osu   난이도별 채보, 있는 것만
-  song.wav, jacket.png, song.json    { title, artist, audioOffset }
+  song.wav, jacket.png, song.json    { title, artist, audioOffset, bpm? }
 
 public/songs/<id>/
   chart.<tier>.json         tier = easy | normal | hard
   audio.<hash>.webm
   jacket.<hash>.avif        1024px 정사각
   jacket-sm.<hash>.avif     256px (결과 화면 등 128px 이하 자리; 캐러셀·플레이 HUD 는 1024 원본을 쓴다)
-  meta.json                 { id, title, artist, palette, audioOffset, durationMs, previewMs, charts: [{ tier, name, file, hash, od, bpm, notes, stars, level }] }
+  meta.json                 { id, title, artist, palette, audioOffset, bpm, durationMs, previewMs, charts: [{ tier, name, file, hash, od, notes, stars, level }] }
 public/songs/index.json     빌드 시 생성
 ```
 - 난이도는 **easy / normal / hard** 세 단계. 파일명이 단계를 정하고, `.osu` 의 `Version` 은 보조 이름
 - `previewMs` 는 곡 선택 미리듣기 시작점: 가장 어려운 채보에서 노트가 가장 빽빽한 12초 구간의 1.5초 앞 (결정적). 미리듣기는 그 지점부터 14초를 페이드와 함께 반복한다
+- **BPM 과 길이는 곡 하나에 하나.** `durationMs` 는 WAV 길이, `bpm` 은 `song.json` 의 `bpm`(`158` 또는 `[min, max]`)이 이기고, 없으면 모든 티어의 타이밍이 같은 값을 가리킬 때만 그 값. 티어마다 타이밍을 따로 추정해서 한두 BPM 씩 어긋날 수 있으므로, 어긋나면 빌드가 실패하고 사람이 `song.json` 에 적는다. 채보 JSON 의 `meta.bpm` 은 그 채보 자체의 타이밍 요약일 뿐 화면에 쓰지 않는다
 - `stars` 는 빌드 시 rosu-pp(공식 난이도 계산기 포팅)로 구한 osu!taiko SR. `level` 1~10 은 `round(stars × 1.6)` 클램프 (`src/app/types.ts` 참고)
 - 파일명 콘텐츠 해시 + `Cache-Control: immutable`
 - `palette` 는 빌드 시 자켓에서 추출 (런타임 추출 금지, 결정적이고 빠름)

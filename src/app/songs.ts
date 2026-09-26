@@ -38,7 +38,6 @@ export function isSongChartRef(v: unknown): v is SongChartRef {
     typeof v.hash === 'string' &&
     v.hash.length > 0 &&
     typeof v.od === 'number' &&
-    isBpm(v.bpm) &&
     typeof v.notes === 'number'
   );
 }
@@ -52,6 +51,7 @@ export function isSongMeta(v: unknown): v is SongMeta {
     typeof v.artist === 'string' &&
     isStringArray(v.palette) &&
     typeof v.audioOffset === 'number' &&
+    isBpm(v.bpm) &&
     typeof v.durationMs === 'number' &&
     typeof v.previewMs === 'number' &&
     typeof v.audio === 'string' &&

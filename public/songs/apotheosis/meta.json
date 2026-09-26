@@ -1,0 +1,52 @@
+{
+  "id": "apotheosis",
+  "title": "Apotheosis",
+  "artist": "",
+  "palette": [
+    "#877969",
+    "#4B443B",
+    "#B7A898"
+  ],
+  "audioOffset": 0,
+  "bpm": [
+    191,
+    191
+  ],
+  "durationMs": 164000,
+  "previewMs": 71714,
+  "audio": "audio.a71edb07.webm",
+  "jacket": "jacket.c7d9d3ae.avif",
+  "jacketSm": "jacket-sm.5daa3bd4.avif",
+  "charts": [
+    {
+      "tier": "easy",
+      "name": "Easy",
+      "file": "chart.easy.json",
+      "hash": "cded7358db905367b1bb5240b7ff26ae7ae808c9f8631a56c1e9d9362b0f82db",
+      "od": 4,
+      "notes": 524,
+      "stars": 2.53,
+      "level": 4
+    },
+    {
+      "tier": "normal",
+      "name": "Normal",
+      "file": "chart.normal.json",
+      "hash": "00ff9b3cb7a952b84e96fd9a3445bf97678e776104c395cd9e7f0ac13a6564b2",
+      "od": 5,
+      "notes": 886,
+      "stars": 4.39,
+      "level": 7
+    },
+    {
+      "tier": "hard",
+      "name": "Hard",
+      "file": "chart.hard.json",
+      "hash": "8596281f480beb81d2cd12a9d66cd168758b147cc12ea5e475340ed913d03a4c",
+      "od": 6,
+      "notes": 1256,
+      "stars": 5.89,
+      "level": 9
+    }
+  ]
+}

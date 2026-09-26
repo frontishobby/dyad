@@ -46,6 +46,8 @@ export interface SongMeta {
   palette: string[];
   /** ms, per-song correction (normally 0). */
   audioOffset: number;
+  /** [min, max] BPM, one for the whole song (song.json's `bpm`, else what every tier's timing agrees on). */
+  bpm: [number, number];
   /** Source audio length, ms (from the WAV header at build time). */
   durationMs: number;
   /** Where the song-select preview starts, ms: just before the densest stretch of the hardest chart. */
@@ -66,8 +68,6 @@ export interface SongChartRef {
   file: string;
   hash: string;
   od: number;
-  /** [min, max] BPM. */
-  bpm: [number, number];
   notes: number;
   /** osu!taiko star rating from rosu-pp at build time (no mods), 2 decimals. */
   stars: number;

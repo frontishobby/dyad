@@ -336,7 +336,7 @@
       <dl class="facts">
         <div>
           <dt class="dim caption">BPM</dt>
-          <dd class="num">{formatBpm(chart.bpm)}</dd>
+          <dd class="num">{formatBpm(song.bpm)}</dd>
         </div>
         <div>
           <dt class="dim caption">길이</dt>

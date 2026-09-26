@@ -232,6 +232,8 @@ interface SongSource {
   title?: string;
   artist?: string;
   audioOffset?: number;
+  /** The song's BPM, `150` or `[140, 180]`; wins over what the charts' timing says. */
+  bpm?: [number, number];
 }
 
 async function readSongSource(path: string): Promise<SongSource> {
@@ -244,6 +246,13 @@ async function readSongSource(path: string): Promise<SongSource> {
   if (typeof obj.title === 'string') source.title = obj.title;
   if (typeof obj.artist === 'string') source.artist = obj.artist;
   if (typeof obj.audioOffset === 'number' && Number.isFinite(obj.audioOffset)) source.audioOffset = obj.audioOffset;
+  if (obj.bpm !== undefined) {
+    const bpm = typeof obj.bpm === 'number' ? [obj.bpm, obj.bpm] : obj.bpm;
+    if (!Array.isArray(bpm) || bpm.length !== 2 || !bpm.every((v) => typeof v === 'number' && v > 0) || bpm[0] > bpm[1]) {
+      throw new Error(`${path}: bpm must be a positive number or [min, max]`);
+    }
+    source.bpm = [bpm[0], bpm[1]];
+  }
   return source;
 }
 
@@ -329,6 +338,22 @@ export function levelFor(stars: number): number {
   return Math.max(1, Math.min(10, Math.round(stars * 1.6)));
 }
 
+/**
+ * One BPM per song. song.json's `bpm` wins; otherwise every tier's timing must
+ * agree, since each tier's timing is estimated separately and may drift by a
+ * beat or two. Disagreement is an error so a human picks the number.
+ */
+export function songBpm(id: string, declared: [number, number] | undefined, tiers: readonly (readonly [number, number])[]): [number, number] {
+  if (declared) return [declared[0], declared[1]];
+  const [first, ...rest] = tiers;
+  if (!first) throw new Error(`${id}: no charts to take the bpm from`);
+  if (rest.some((b) => b[0] !== first[0] || b[1] !== first[1])) {
+    const seen = tiers.map((b) => (b[0] === b[1] ? `${b[0]}` : `${b[0]}–${b[1]}`)).join(', ');
+    throw new Error(`songs-src/${id}: tiers disagree on bpm (${seen}); set "bpm" in song.json`);
+  }
+  return [first[0], first[1]];
+}
+
 function chartRef(tier: Tier, file: string, chart: Chart, stars: number): SongChartRef {
   return {
     tier,
@@ -336,7 +361,6 @@ function chartRef(tier: Tier, file: string, chart: Chart, stars: number): SongCh
     file,
     hash: chart.hash,
     od: chart.meta.od,
-    bpm: [chart.meta.bpm[0], chart.meta.bpm[1]],
     notes: chart.notes.length,
     stars,
     level: levelFor(stars),
@@ -399,6 +423,7 @@ async function buildSong(id: string): Promise<SongMeta> {
   const sources = await discoverCharts(srcDir);
   if (sources.length === 0) throw new Error(`${srcDir}: no easy.osu / normal.osu / hard.osu`);
   const charts: SongChartRef[] = [];
+  const tierBpms: [number, number][] = [];
   let firstChart: Chart | null = null;
   const chartFiles = new Set<string>();
   for (const src of sources) {
@@ -409,6 +434,7 @@ async function buildSong(id: string): Promise<SongMeta> {
     const chartPath = join(outDir, src.file);
     log((await writeIfChanged(chartPath, serializeChart(chart))) ? 'wrote' : 'unchanged', chartPath);
     charts.push(chartRef(src.tier, src.file, chart, starsFor(osuText)));
+    tierBpms.push(chart.meta.bpm);
     chartFiles.add(src.file);
     firstChart ??= chart;
   }
@@ -453,12 +479,14 @@ async function buildSong(id: string): Promise<SongMeta> {
 
   // meta.json (field order follows SongMeta)
   const source = await readSongSource(join(srcDir, 'song.json'));
+  const bpm = songBpm(id, source.bpm, tierBpms);
   const meta: SongMeta = {
     id,
     title: source.title ?? chart.meta.title,
     artist: source.artist ?? chart.meta.artist,
     palette,
     audioOffset: source.audioOffset ?? 0,
+    bpm,
     durationMs,
     previewMs: previewStartMs(chart.notes, durationMs),
     audio: audioName,
@@ -469,7 +497,7 @@ async function buildSong(id: string): Promise<SongMeta> {
   const metaPath = join(outDir, 'meta.json');
   log((await writeIfChanged(metaPath, `${JSON.stringify(meta, null, 2)}\n`)) ? 'wrote' : 'unchanged', metaPath);
 
-  console.log(`  ${id}: ${(durationMs / 1000).toFixed(1)} s, bpm ${chart.meta.bpm[0]}–${chart.meta.bpm[1]}, palette ${palette.join(' ')}`);
+  console.log(`  ${id}: ${(durationMs / 1000).toFixed(1)} s, bpm ${bpm[0]}–${bpm[1]}, palette ${palette.join(' ')}`);
   for (const c of charts) console.log(`    ${c.tier.padEnd(6)} lv${c.level} ${c.notes} notes, od ${c.od}, ${c.file}, hash ${c.hash}`);
   return meta;
 }

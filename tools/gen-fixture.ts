@@ -12,7 +12,7 @@
  *                (tierEvents), so the audio — synthesised from hard — has a
  *                hit under every note of every tier
  *   song.wav     44100 Hz, 16-bit, stereo PCM
- *   song.json    { title, artist, audioOffset } — the human-edited metadata
+ *   song.json    { title, artist, audioOffset } — the human-edited metadata (bpm optional)
  *   jacket.png   1024×1024 duotone composition from the DESIGN tokens
  *
  * CLI: node tools/gen-fixture.ts [outDir]   (npm run songs:fixture)

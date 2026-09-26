@@ -11,6 +11,7 @@ function song(over: Partial<SongMeta> = {}): SongMeta {
     artist: 'DYAD',
     palette: ['#123456'],
     audioOffset: 0,
+    bpm: [120, 120],
     durationMs: 72800,
     previewMs: 20000,
     audio: 'audio.abc.webm',
@@ -40,7 +41,7 @@ async function chart(): Promise<Chart> {
 }
 
 function ref(c: Chart, over: Partial<SongChartRef> = {}): SongChartRef {
-  return { tier: 'hard', name: 'Oni', file: 'chart.hard.json', hash: c.hash, od: 5, bpm: [120, 120], notes: 2, stars: 4.5, level: 7, ...over };
+  return { tier: 'hard', name: 'Oni', file: 'chart.hard.json', hash: c.hash, od: 5, notes: 2, stars: 4.5, level: 7, ...over };
 }
 
 function jsonResponse(data: unknown, status = 200): Response {
@@ -88,10 +89,11 @@ describe('loadSongIndex', () => {
 
   it('validates chart refs inside songs', () => {
     expect(isSongIndex({ version: 1, songs: [] })).toBe(true);
-    const c: SongChartRef = { tier: 'normal', name: 'Normal', file: 'chart.normal.json', hash: 'h', od: 5, bpm: [1, 2], notes: 3, stars: 3.1, level: 5 };
+    const c: SongChartRef = { tier: 'normal', name: 'Normal', file: 'chart.normal.json', hash: 'h', od: 5, notes: 3, stars: 3.1, level: 5 };
     expect(isSongIndex({ version: 1, songs: [song({ charts: [c] })] })).toBe(true);
     expect(isSongIndex({ version: 1, songs: [song({ charts: [{ ...c, hash: '' }] })] })).toBe(false);
     expect(isSongIndex({ version: 1, songs: [song({ charts: [{ ...c, tier: 'oni' as never }] })] })).toBe(false);
+    expect(isSongIndex({ version: 1, songs: [song({ bpm: undefined as never })] })).toBe(false);
     const { durationMs: _drop, ...noDuration } = song();
     void _drop;
     expect(isSongIndex({ version: 1, songs: [noDuration] })).toBe(false);

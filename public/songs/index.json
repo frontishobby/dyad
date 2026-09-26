@@ -2,6 +2,58 @@
   "version": 1,
   "songs": [
     {
+      "id": "apotheosis",
+      "title": "Apotheosis",
+      "artist": "",
+      "palette": [
+        "#877969",
+        "#4B443B",
+        "#B7A898"
+      ],
+      "audioOffset": 0,
+      "bpm": [
+        191,
+        191
+      ],
+      "durationMs": 164000,
+      "previewMs": 71714,
+      "audio": "audio.a71edb07.webm",
+      "jacket": "jacket.c7d9d3ae.avif",
+      "jacketSm": "jacket-sm.5daa3bd4.avif",
+      "charts": [
+        {
+          "tier": "easy",
+          "name": "Easy",
+          "file": "chart.easy.json",
+          "hash": "cded7358db905367b1bb5240b7ff26ae7ae808c9f8631a56c1e9d9362b0f82db",
+          "od": 4,
+          "notes": 524,
+          "stars": 2.53,
+          "level": 4
+        },
+        {
+          "tier": "normal",
+          "name": "Normal",
+          "file": "chart.normal.json",
+          "hash": "00ff9b3cb7a952b84e96fd9a3445bf97678e776104c395cd9e7f0ac13a6564b2",
+          "od": 5,
+          "notes": 886,
+          "stars": 4.39,
+          "level": 7
+        },
+        {
+          "tier": "hard",
+          "name": "Hard",
+          "file": "chart.hard.json",
+          "hash": "8596281f480beb81d2cd12a9d66cd168758b147cc12ea5e475340ed913d03a4c",
+          "od": 6,
+          "notes": 1256,
+          "stars": 5.89,
+          "level": 9
+        }
+      ]
+    },
+    {
       "id": "malice",
       "title": "Malice",
       "artist": "",
@@ -11,6 +63,10 @@
         "#A598AA"
       ],
       "audioOffset": 0,
+      "bpm": [
+        158,
+        158
+      ],
       "durationMs": 172150,
       "previewMs": 27867,
       "audio": "audio.5b614d55.webm",
@@ -23,10 +79,6 @@
           "file": "chart.easy.json",
           "hash": "9b751e1561691b66e6cb6995a2679a2deccd196f9beb78496698412869f97792",
           "od": 4,
-          "bpm": [
-            158,
-            158
-          ],
           "notes": 1056,
           "stars": 4.08,
           "level": 7
@@ -37,10 +89,6 @@
           "file": "chart.normal.json",
           "hash": "79cab6c4bd73471e3d5cf94a609682b3127e720d68b7e90b963c9210aa1eaa79",
           "od": 5,
-          "bpm": [
-            158,
-            159
-          ],
           "notes": 1396,
           "stars": 5.22,
           "level": 8
@@ -51,193 +99,9 @@
           "file": "chart.hard.json",
           "hash": "d77eec90d8de74fcff61bf7fca3421cd5524d50cca4ff438ec9cb2fca284b01c",
           "od": 6,
-          "bpm": [
-            158,
-            158
-          ],
           "notes": 1370,
           "stars": 5.67,
           "level": 9
-        }
-      ]
-    },
-    {
-      "id": "meteor-night",
-      "title": "Meteor Night",
-      "artist": "",
-      "palette": [
-        "#353755",
-        "#7678B3",
-        "#465699"
-      ],
-      "audioOffset": 0,
-      "durationMs": 152870,
-      "previewMs": 56089,
-      "audio": "audio.943b7d68.webm",
-      "jacket": "jacket.161f0458.avif",
-      "jacketSm": "jacket-sm.d9807678.avif",
-      "charts": [
-        {
-          "tier": "easy",
-          "name": "Easy",
-          "file": "chart.easy.json",
-          "hash": "ed85e236d0b1ec6f2175845f971f63e4166fe80ac4c14ef57ed24f44e183bb95",
-          "od": 4,
-          "bpm": [
-            186.42,
-            186.42
-          ],
-          "notes": 474,
-          "stars": 2.26,
-          "level": 4
-        },
-        {
-          "tier": "normal",
-          "name": "Normal",
-          "file": "chart.normal.json",
-          "hash": "4b8ec34f624e6e46625bc9450f820cd80fcae22ba49388fe2bc206d3d1174840",
-          "od": 5,
-          "bpm": [
-            186.42,
-            186.42
-          ],
-          "notes": 669,
-          "stars": 3.52,
-          "level": 6
-        },
-        {
-          "tier": "hard",
-          "name": "Hard",
-          "file": "chart.hard.json",
-          "hash": "a75e346fbe5959877ef8b21276701d26c78aa6bb164635bf7a2ee07770024e96",
-          "od": 6,
-          "bpm": [
-            186.42,
-            186.42
-          ],
-          "notes": 984,
-          "stars": 4.71,
-          "level": 8
-        }
-      ]
-    },
-    {
-      "id": "neon-rain",
-      "title": "Neon Rain",
-      "artist": "",
-      "palette": [
-        "#253748",
-        "#465976",
-        "#867886"
-      ],
-      "audioOffset": 0,
-      "durationMs": 146550,
-      "previewMs": 55181,
-      "audio": "audio.08891684.webm",
-      "jacket": "jacket.c96eb473.avif",
-      "jacketSm": "jacket-sm.78082781.avif",
-      "charts": [
-        {
-          "tier": "easy",
-          "name": "Easy",
-          "file": "chart.easy.json",
-          "hash": "276866ef7564e6a1eecd1897e2f81a837d708957b302361bfceadcc031170eed",
-          "od": 4,
-          "bpm": [
-            180,
-            180
-          ],
-          "notes": 379,
-          "stars": 2.36,
-          "level": 4
-        },
-        {
-          "tier": "normal",
-          "name": "Normal",
-          "file": "chart.normal.json",
-          "hash": "683320873f75c38484099c6cddb459e8d54bd923da113a42cb8edc469b584143",
-          "od": 5,
-          "bpm": [
-            180,
-            180
-          ],
-          "notes": 577,
-          "stars": 3.49,
-          "level": 6
-        },
-        {
-          "tier": "hard",
-          "name": "Hard",
-          "file": "chart.hard.json",
-          "hash": "05aeb1f73f56dced85d573687a16b626bb3559dd85e24c277221dae15f37f4dc",
-          "od": 6,
-          "bpm": [
-            180,
-            180
-          ],
-          "notes": 971,
-          "stars": 5.08,
-          "level": 8
-        }
-      ]
-    },
-    {
-      "id": "prism",
-      "title": "Prism",
-      "artist": "",
-      "palette": [
-        "#696DB9",
-        "#283567",
-        "#55A8E6"
-      ],
-      "audioOffset": 0,
-      "durationMs": 127988,
-      "previewMs": 88247,
-      "audio": "audio.11abfb26.webm",
-      "jacket": "jacket.23b48b98.avif",
-      "jacketSm": "jacket-sm.1411a827.avif",
-      "charts": [
-        {
-          "tier": "easy",
-          "name": "Easy",
-          "file": "chart.easy.json",
-          "hash": "c8c1fd8648e0be2f02d629870b8ff83753b8d40ce32939180f7abf8cb1267b0f",
-          "od": 4,
-          "bpm": [
-            169,
-            173
-          ],
-          "notes": 343,
-          "stars": 2.16,
-          "level": 3
-        },
-        {
-          "tier": "normal",
-          "name": "Normal",
-          "file": "chart.normal.json",
-          "hash": "020e952c236810f1dd8d2475890922ba11f021ab3d4c087b25b76e81610001da",
-          "od": 5,
-          "bpm": [
-            169,
-            172
-          ],
-          "notes": 484,
-          "stars": 3.19,
-          "level": 5
-        },
-        {
-          "tier": "hard",
-          "name": "Hard",
-          "file": "chart.hard.json",
-          "hash": "e5a3d694f2c7880ee40a3dbdca016f3449c43127ab59fa5f8f6f04cae8c1beb3",
-          "od": 6,
-          "bpm": [
-            168,
-            172
-          ],
-          "notes": 727,
-          "stars": 4.26,
-          "level": 7
         }
       ]
     }
