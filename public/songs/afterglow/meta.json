@@ -1,0 +1,52 @@
+{
+  "id": "afterglow",
+  "title": "Afterglow",
+  "artist": "",
+  "palette": [
+    "#183458",
+    "#565976",
+    "#8A7989"
+  ],
+  "audioOffset": 0,
+  "bpm": [
+    160,
+    160
+  ],
+  "durationMs": 143880,
+  "previewMs": 52852,
+  "audio": "audio.bd11f8da.webm",
+  "jacket": "jacket.fbbcec96.avif",
+  "jacketSm": "jacket-sm.a400e53f.avif",
+  "charts": [
+    {
+      "tier": "easy",
+      "name": "Easy",
+      "file": "chart.easy.json",
+      "hash": "d5398aca23c75a5e89da9f7803dd0e6f7cc20a68b4218b73e21755e6432b0f15",
+      "od": 4,
+      "notes": 548,
+      "stars": 2.99,
+      "level": 5
+    },
+    {
+      "tier": "normal",
+      "name": "Normal",
+      "file": "chart.normal.json",
+      "hash": "2a8b03ea23747f77d34b71214e63e8a00c9528ac3cb4b88d8a0cdc529b50c3ce",
+      "od": 5,
+      "notes": 756,
+      "stars": 3.83,
+      "level": 6
+    },
+    {
+      "tier": "hard",
+      "name": "Hard",
+      "file": "chart.hard.json",
+      "hash": "6eed931153e01ca3ce449da9c538c7099ad2511674a28df8bd2246d2e87ec5b5",
+      "od": 6,
+      "notes": 994,
+      "stars": 5.23,
+      "level": 8
+    }
+  ]
+}
