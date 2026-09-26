@@ -106,6 +106,58 @@
       ]
     },
     {
+      "id": "glass-horizon",
+      "title": "Glass Horizon",
+      "artist": "",
+      "palette": [
+        "#D9D5FA",
+        "#6879B6",
+        "#A6A9D8"
+      ],
+      "audioOffset": 0,
+      "bpm": [
+        150,
+        150
+      ],
+      "durationMs": 123050,
+      "previewMs": 106035,
+      "audio": "audio.c9a6d7a2.webm",
+      "jacket": "jacket.33b1a008.avif",
+      "jacketSm": "jacket-sm.db605320.avif",
+      "charts": [
+        {
+          "tier": "easy",
+          "name": "Easy",
+          "file": "chart.easy.json",
+          "hash": "f09db82092511ab7ade6261d37ba1ff2a92385eab5158de36bb5cac01e60f823",
+          "od": 4,
+          "notes": 276,
+          "stars": 1.86,
+          "level": 3
+        },
+        {
+          "tier": "normal",
+          "name": "Normal",
+          "file": "chart.normal.json",
+          "hash": "89aacc375f0c5a25d645a83059de095d8c9dae5b78a9e94f65eff095843070c5",
+          "od": 5,
+          "notes": 374,
+          "stars": 2.73,
+          "level": 4
+        },
+        {
+          "tier": "hard",
+          "name": "Hard",
+          "file": "chart.hard.json",
+          "hash": "853883bb54c65fa07026a8f0bdb6df12022883195bfaf33efb9a0ffded14917d",
+          "od": 6,
+          "notes": 763,
+          "stars": 4.08,
+          "level": 7
+        }
+      ]
+    },
+    {
       "id": "malice",
       "title": "Malice",
       "artist": "",
