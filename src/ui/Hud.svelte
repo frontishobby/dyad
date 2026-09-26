@@ -8,14 +8,20 @@
   import type { EngineEvent, EngineState, Judgement } from '../core/types.ts';
   import type { Layout } from '../render/types.ts';
   import { MOTION, TYPE } from '../design/tokens.ts';
+  import { JUDGE_WINDOWS } from '../core/windows.ts';
   import {
+    ERROR_MEAN_OF,
+    ERROR_TICKS,
     JUDGEMENT_HOLD_MS,
     crossedMilestone,
+    errorFraction,
     formatScore,
+    hitErrors,
     judgementAnchor,
     judgementTone,
     judgementWord,
     latestJudgement,
+    meanOf,
     progressRatio,
   } from './play/hud.ts';
 
@@ -48,6 +54,18 @@
   let judgement = $state<Judgement | null>(null);
   let jacketFailed = $state(false);
 
+  /** Hit error bar (landscape): recent hits as fading ticks, x as a 0..1 fraction of the bar. */
+  let ticks = $state<{ id: number; x: number; great: boolean }[]>([]);
+  /** Mean of the last ERROR_MEAN_OF offsets as a 0..1 fraction; null before the first hit. */
+  let meanX = $state<number | null>(null);
+  let nextTickId = 0;
+  /** Plain ring of recent offsets behind meanX; never read by the template. */
+  const recentDeltas: number[] = [];
+  /** The bar spans the whole hittable window, so every tick lands on it. */
+  const errorRangeMs = JUDGE_WINDOWS.ok;
+  const ERROR_BAR_W = 480;
+  const greatInset = `${(errorFraction(-JUDGE_WINDOWS.great, errorRangeMs) * 100).toFixed(3)}%`;
+
   let judgementTimer: ReturnType<typeof setTimeout> | undefined;
 
   const portrait = $derived(layout.orientation === 'portrait');
@@ -74,6 +92,7 @@
 
   /** Called synchronously from the press handler (and for timed-out misses from the loop). */
   export function noteEvents(events: readonly EngineEvent[]): void {
+    if (!portrait) noteErrors(events);
     if (!showJudgement) return;
     const j = latestJudgement(events);
     if (j === null) return;
@@ -83,6 +102,17 @@
       judgementTimer = undefined;
       judgement = null;
     }, JUDGEMENT_HOLD_MS);
+  }
+
+  function noteErrors(events: readonly EngineEvent[]): void {
+    const hits = hitErrors(events);
+    if (hits.length === 0) return;
+    const added = hits.map((h) => ({ id: nextTickId++, x: errorFraction(h.deltaMs, errorRangeMs), great: h.judgement === 'great' }));
+    ticks = [...ticks, ...added].slice(-ERROR_TICKS);
+    for (const h of hits) recentDeltas.push(h.deltaMs);
+    if (recentDeltas.length > ERROR_MEAN_OF) recentDeltas.splice(0, recentDeltas.length - ERROR_MEAN_OF);
+    const mean = meanOf(recentDeltas);
+    meanX = mean === null ? null : errorFraction(mean, errorRangeMs);
   }
 
   onDestroy(() => {
@@ -99,6 +129,7 @@
   style:height="{layout.info.h}px"
   style:--combo-pulse-ms="{MOTION.comboPulse}ms"
   style:--combo-milestone-ms="{MOTION.comboMilestone}ms"
+  style:--error-tick-ms="{MOTION.errorTick}ms"
   style:--fs-title="{TYPE.size.title}px"
   style:--fs-caption="{TYPE.size.caption}px"
   style:--fs-score="{scoreSize}px"
@@ -126,6 +157,23 @@
       </button>
     {/if}
   </div>
+  {#if !portrait}
+    <div class="errors" class:beside-jacket={!!jacketUrl && !jacketFailed} aria-hidden="true">
+      <span class="side">빠름</span>
+      <div class="bar" style:width="{ERROR_BAR_W}px" style:--great-inset={greatInset}>
+        <i class="zone ok"></i>
+        <i class="zone great"></i>
+        <i class="centre"></i>
+        {#each ticks as t (t.id)}
+          <i class="tick" class:great={t.great} style:left="{t.x * 100}%"></i>
+        {/each}
+        {#if meanX !== null}
+          <i class="mean" style:transform="translateX({meanX * ERROR_BAR_W}px)"></i>
+        {/if}
+      </div>
+      <span class="side">느림</span>
+    </div>
+  {/if}
   <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="1" aria-valuenow={progress}>
     <i style:transform="scaleX({progress})"></i>
   </div>
@@ -313,6 +361,87 @@
     background: var(--kat);
     transform-origin: 0 50%;
     transform: scaleX(0);
+  }
+  /* Hit error bar (landscape): early left, late right, the great window as the inner band. */
+  .errors {
+    position: absolute;
+    left: 32px;
+    right: 32px;
+    bottom: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .errors.beside-jacket {
+    left: 292px; /* 32 padding + 240 jacket + 20 gap: the band under the title column */
+  }
+  .side {
+    font-size: var(--fs-caption);
+    color: var(--text-faint);
+  }
+  .bar {
+    position: relative;
+    height: 32px;
+  }
+  .bar i {
+    position: absolute;
+    display: block;
+  }
+  .zone {
+    top: 12px;
+    height: 8px;
+  }
+  .zone.ok {
+    left: 0;
+    right: 0;
+    background: var(--raised);
+  }
+  .zone.great {
+    left: var(--great-inset);
+    right: var(--great-inset);
+    background: var(--line);
+  }
+  .centre {
+    left: 50%;
+    top: 4px;
+    width: 2px;
+    height: 24px;
+    margin-left: -1px;
+    background: var(--text-faint);
+  }
+  .tick {
+    top: 6px;
+    width: 2px;
+    height: 20px;
+    margin-left: -1px;
+    border-radius: 1px;
+    background: var(--text-dim);
+    /* Reduced motion drops the fade: ticks then stay until ERROR_TICKS pushes them out. */
+    opacity: 0.9;
+    animation: error-tick var(--error-tick-ms) linear forwards;
+  }
+  .tick.great {
+    background: var(--text);
+  }
+  @keyframes error-tick {
+    from {
+      opacity: 0.9;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  /* Mean of the recent hits: a caret over the bar pointing down at it. */
+  .mean {
+    left: -5px;
+    top: -6px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid var(--kat);
+    transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .judgement {
     position: absolute;

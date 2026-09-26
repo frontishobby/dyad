@@ -103,6 +103,8 @@ export const MOTION = {
   burst: 240,
   /** Judgement word pops in over this, then holds and fades (track.ts JUDGEMENT_TEXT_MS). */
   judgementPop: 90,
+  /** Hit error bar: a tick fades out over this after its hit. */
+  errorTick: 2400,
   /** Beat pulse on the seam line and the band, decaying over this after each beat. */
   beatPulse: 220,
   /** Screen entrance in the shell (fade + rise). */

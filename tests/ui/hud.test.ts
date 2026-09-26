@@ -5,11 +5,14 @@ import {
   FIGURE_SPACE,
   PUNCTUATION_SPACE,
   crossedMilestone,
+  errorFraction,
   formatScore,
+  hitErrors,
   judgementAnchor,
   judgementTone,
   judgementWord,
   latestJudgement,
+  meanOf,
   progressRatio,
 } from '../../src/ui/play/hud.ts';
 
@@ -127,5 +130,54 @@ describe('judgementAnchor', () => {
       gate: { x: 216, y: 144, w: 78, h: 432 },
     };
     expect(judgementAnchor(layout)).toEqual({ x: 255, y: 144 + 432 + 24 });
+  });
+});
+
+describe('hitErrors', () => {
+  const note = (judgement: 'great' | 'ok' | 'miss', deltaMs: number | null): EngineEvent => ({
+    type: 'note',
+    index: 0,
+    judgement,
+    deltaMs,
+    key: deltaMs === null ? null : 'DL',
+    big: false,
+    strong: false,
+  });
+
+  it('keeps timed hits in order and drops misses and non-note events', () => {
+    const events: EngineEvent[] = [
+      note('great', -12),
+      { type: 'roll-tick', index: 0, key: 'DL' },
+      note('miss', null),
+      note('ok', 41),
+    ];
+    expect(hitErrors(events)).toEqual([
+      { deltaMs: -12, judgement: 'great' },
+      { deltaMs: 41, judgement: 'ok' },
+    ]);
+    expect(hitErrors([])).toEqual([]);
+  });
+});
+
+describe('errorFraction', () => {
+  it('maps early to the left end, late to the right end, on time to the middle', () => {
+    expect(errorFraction(-50, 50)).toBe(0);
+    expect(errorFraction(0, 50)).toBe(0.5);
+    expect(errorFraction(50, 50)).toBe(1);
+    expect(errorFraction(-30, 50)).toBeCloseTo(0.2);
+  });
+
+  it('clamps and survives bad input', () => {
+    expect(errorFraction(-80, 50)).toBe(0);
+    expect(errorFraction(80, 50)).toBe(1);
+    expect(errorFraction(Number.NaN, 50)).toBe(0.5);
+    expect(errorFraction(10, 0)).toBe(0.5);
+  });
+});
+
+describe('meanOf', () => {
+  it('averages, and is null when empty', () => {
+    expect(meanOf([-10, 0, 16])).toBe(2);
+    expect(meanOf([])).toBeNull();
   });
 });

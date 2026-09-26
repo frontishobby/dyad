@@ -18,6 +18,10 @@ export { COMBO_STEP };
 export const JUDGEMENT_HOLD_MS = 500;
 /** Progress is quantised so the bar only touches the DOM ~1000× per song. */
 export const PROGRESS_STEPS = 1000;
+/** Hit error bar: at most this many ticks are kept on screen (older ones are dropped). */
+export const ERROR_TICKS = 24;
+/** Hit error bar: the mean marker averages the last this many hits. */
+export const ERROR_MEAN_OF = 10;
 
 /**
  * "  987,650" rather than "0,987,650" (DESIGN §3): every position of the
@@ -61,6 +65,38 @@ export function latestJudgement(events: readonly EngineEvent[]): Judgement | nul
     if (e !== undefined && e.type === 'note') return e.judgement;
   }
   return null;
+}
+
+/** One judged hit for the error bar: a signed offset and how well it landed. */
+export interface HitError {
+  /** hitMs − note.t: negative is early. */
+  deltaMs: number;
+  judgement: Exclude<Judgement, 'miss'>;
+}
+
+/** The timed hits in a batch, in order. Misses carry no offset and are left out. */
+export function hitErrors(events: readonly EngineEvent[]): HitError[] {
+  const out: HitError[] = [];
+  for (let i = 0; i < events.length; i++) {
+    const e = events[i];
+    if (e === undefined || e.type !== 'note' || e.judgement === 'miss' || e.deltaMs === null) continue;
+    out.push({ deltaMs: e.deltaMs, judgement: e.judgement });
+  }
+  return out;
+}
+
+/** Position of an offset on a ±rangeMs bar, 0 (early end) .. 1 (late end), clamped. */
+export function errorFraction(deltaMs: number, rangeMs: number): number {
+  if (!(rangeMs > 0) || !Number.isFinite(deltaMs)) return 0.5;
+  return Math.min(1, Math.max(0, (deltaMs + rangeMs) / (2 * rangeMs)));
+}
+
+/** Arithmetic mean, or null for an empty list. */
+export function meanOf(values: readonly number[]): number | null {
+  if (values.length === 0) return null;
+  let sum = 0;
+  for (const v of values) sum += v;
+  return sum / values.length;
 }
 
 /**
