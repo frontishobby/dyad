@@ -108,9 +108,18 @@
   // The selected song's chorus, faded in once the carousel has settled on it.
   // Audio is already unlocked (the boot screen's gesture), so this can start
   // without another tap; if it cannot, the player just stays silent.
+  // It pauses while the window is out of focus or hidden and picks up where it
+  // left off when the player comes back.
   let preview: PreviewPlayer | null = null;
   let previewTimer: ReturnType<typeof setTimeout> | undefined;
   const PREVIEW_SETTLE_MS = 350;
+  let windowActive = true;
+
+  function syncWindowActive(): void {
+    windowActive = !document.hidden && document.hasFocus();
+    if (windowActive) preview?.resume();
+    else preview?.pause();
+  }
 
   $effect(() => {
     const current = song;
@@ -119,7 +128,10 @@
     previewTimer = setTimeout(() => {
       previewTimer = undefined;
       try {
-        preview ??= createPreviewPlayer();
+        if (!preview) {
+          preview = createPreviewPlayer();
+          if (!windowActive) preview.pause();
+        }
         preview.play(songUrl(current, current.audio), current.previewMs);
       } catch (err) {
         console.warn('dyad: preview unavailable', err);
@@ -266,7 +278,13 @@
   }
 </script>
 
-<svelte:window onkeydown={onKeydown} bind:innerWidth={viewportW} />
+<svelte:window
+  onkeydown={onKeydown}
+  onblur={syncWindowActive}
+  onfocus={syncWindowActive}
+  bind:innerWidth={viewportW}
+/>
+<svelte:document onvisibilitychange={syncWindowActive} />
 
 <main class="screen select">
   <header class="head">

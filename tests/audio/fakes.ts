@@ -34,7 +34,16 @@ export class FakeAudioBuffer {
 }
 
 export class FakeGainNode {
-  readonly gain = { value: 1 };
+  /** Automation calls are recorded, not simulated; `value` only changes on direct writes. */
+  readonly gain = {
+    value: 1,
+    ramps: [] as { value: number; time: number }[],
+    cancelScheduledValues(_time: number): void {},
+    setValueAtTime(_value: number, _time: number): void {},
+    linearRampToValueAtTime(value: number, time: number): void {
+      this.ramps.push({ value, time });
+    },
+  };
   readonly connections: unknown[] = [];
 
   connect(destination: unknown): unknown {
@@ -53,6 +62,11 @@ export class FakeBufferSource {
   /** `when` argument of start(); null until started. */
   startedAt: number | null = null;
   readonly startCalls: (number | undefined)[] = [];
+  /** `offset` argument of start(); undefined when not given. */
+  startOffset: number | undefined;
+  loop = false;
+  loopStart = 0;
+  loopEnd = 0;
   readonly stopCalls: (number | undefined)[] = [];
   readonly connections: unknown[] = [];
   disconnected = false;
@@ -68,9 +82,10 @@ export class FakeBufferSource {
     this.disconnected = true;
   }
 
-  start(when?: number): void {
+  start(when?: number, offset?: number): void {
     if (this.startedAt !== null) throw new Error('InvalidStateError: start() called twice');
     this.startedAt = when ?? this.ctx.currentTime;
+    this.startOffset = offset;
     this.startCalls.push(when);
   }
 
