@@ -8,6 +8,8 @@
    * Portrait touch: no frame, the app fills the screen (dynamic resolution).
    */
   import { onMount } from 'svelte';
+  import { setMasterVolume } from './audio/context.ts';
+  import { settings } from './app/settings.svelte.ts';
   import { screen } from './app/screen.svelte.ts';
   import { theme } from './app/theme.svelte.ts';
   import { LAYOUT } from './design/tokens.ts';
@@ -25,6 +27,9 @@
   // Importing theme.svelte.ts injects the tokens into <html>; reading it here
   // keeps the root in step with the current theme name.
   const current = $derived(screen.current);
+
+  // Only stores the value (and retunes live master gains); never creates the AudioContext.
+  $effect.pre(() => setMasterVolume(settings.value.masterVolume));
 
   let viewportW = $state(typeof window === 'undefined' ? FRAME_W : window.innerWidth);
   let viewportH = $state(typeof window === 'undefined' ? FRAME_H : window.innerHeight);

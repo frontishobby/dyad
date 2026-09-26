@@ -123,6 +123,7 @@ export function validateSettings(raw: unknown, base: Settings = DEFAULT_SETTINGS
     inputOffset: toOffsetMs(raw.inputOffset, base.inputOffset),
     hiSpeed: toHiSpeed(raw.hiSpeed, base.hiSpeed),
     theme: toTheme(raw.theme, base.theme),
+    masterVolume: toVolume(raw.masterVolume, base.masterVolume),
     hitSoundVolume: toVolume(raw.hitSoundVolume, base.hitSoundVolume),
     calibrated: toBoolean(raw.calibrated, base.calibrated),
   };

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSongPlayer, START_LEAD_S } from '../../src/audio/player.ts';
+import { audioOutput } from '../../src/audio/context.ts';
 import type { SongPlayer } from '../../src/audio/types.ts';
 import { FakeAudioContext, flush, makeFetch } from './fakes.ts';
 
@@ -136,7 +137,7 @@ describe('createSongPlayer', () => {
       expect(source.startedAt).toBeCloseTo(5.1, 9);
       expect(source.startCalls).toEqual([5.1]);
       expect(source.buffer?.duration).toBe(2.5);
-      expect(source.connections).toEqual([ctx.destination]);
+      expect(source.connections).toEqual([audioOutput(ctx.asReal())]);
       expect(player.state).toBe('playing');
     });
 

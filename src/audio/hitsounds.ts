@@ -8,6 +8,7 @@
  * the buffer runs out).
  */
 import type { NoteKind } from '../core/types.ts';
+import { audioOutput } from './context.ts';
 import type { HitSounds } from './types.ts';
 
 const TWO_PI = Math.PI * 2;
@@ -168,9 +169,10 @@ export function createHitSounds(): HitSounds {
       if (!bank) return;
       const buffer = kind === 'd' ? (big ? bank.dBig : bank.d) : big ? bank.kBig : bank.k;
       const { ctx } = bank;
+      const out = audioOutput(ctx);
       const gain = ctx.createGain();
       gain.gain.value = volume;
-      gain.connect(ctx.destination);
+      gain.connect(out);
       const source = ctx.createBufferSource();
       source.buffer = buffer;
       source.connect(gain);

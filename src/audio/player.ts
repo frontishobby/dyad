@@ -15,7 +15,7 @@
  * destroy() returns to idle and drops the buffer.
  */
 import type { PlayerState, SongPlayer } from './types.ts';
-import { getAudioContext } from './context.ts';
+import { audioOutput, getAudioContext } from './context.ts';
 
 /**
  * Seconds between start() and the first sample. Scheduling a little ahead
@@ -107,7 +107,7 @@ class SongPlayerImpl implements SongPlayer {
 
     const source = this.ctx.createBufferSource();
     source.buffer = buffer;
-    source.connect(this.ctx.destination);
+    source.connect(audioOutput(this.ctx));
     source.onended = () => {
       // stop() and start() both swap `this.source` before the old node can end.
       if (this.source !== source) return;

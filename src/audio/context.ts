@@ -55,3 +55,31 @@ export async function resumeAudio(): Promise<void> {
     unlocked = true;
   }
 }
+
+/**
+ * Master volume: every sound goes through one GainNode per context instead of
+ * straight to ctx.destination, so a single setting scales song, previews, hit
+ * sounds and the metronome together. Setting it never creates a context.
+ */
+const masters = new Map<AudioContext, GainNode>();
+let masterVolume = 1;
+
+/** The node sources should connect to in place of `ctx.destination`. */
+export function audioOutput(ctx: AudioContext): AudioNode {
+  let master = masters.get(ctx);
+  if (!master) {
+    master = ctx.createGain();
+    master.gain.value = masterVolume;
+    master.connect(ctx.destination);
+    masters.set(ctx, master);
+  }
+  return master;
+}
+
+export function setMasterVolume(v: number): void {
+  masterVolume = Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0;
+  for (const [ctx, master] of masters) {
+    if (ctx.state === 'closed') masters.delete(ctx);
+    else master.gain.value = masterVolume;
+  }
+}

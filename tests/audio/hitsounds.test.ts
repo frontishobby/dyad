@@ -8,6 +8,7 @@ import {
   renderKat,
 } from '../../src/audio/hitsounds.ts';
 import { FakeAudioContext, type FakeAudioBuffer } from './fakes.ts';
+import { audioOutput } from '../../src/audio/context.ts';
 
 function peakOf(samples: Float32Array): number {
   let peak = 0;
@@ -181,13 +182,14 @@ describe('createHitSounds', () => {
 
     sounds.play('d');
     expect(ctx.sources).toHaveLength(1);
-    expect(ctx.gains).toHaveLength(1);
+    // The context's master gain, then the per-hit gain.
+    expect(ctx.gains).toHaveLength(2);
     const source = ctx.lastSource;
     const gain = ctx.lastGain;
     expect(source.startCalls).toEqual([undefined]);
     expect(source.startedAt).toBe(ctx.currentTime);
     expect(source.connections).toEqual([gain]);
-    expect(gain.connections).toEqual([ctx.destination]);
+    expect(gain.connections).toEqual([audioOutput(ctx.asReal())]);
     expect(gain.gain.value).toBe(1);
     expect(source.buffer?.length).toBe(4320);
 
@@ -195,7 +197,7 @@ describe('createHitSounds', () => {
     sounds.play('d', true);
     sounds.play('k', true);
     expect(ctx.sources.map((s) => s.buffer?.length)).toEqual([4320, 1920, 6048, 2688]);
-    expect(ctx.gains).toHaveLength(4);
+    expect(ctx.gains).toHaveLength(5);
     expect(new Set(ctx.sources).size).toBe(4);
   });
 

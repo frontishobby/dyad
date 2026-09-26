@@ -13,6 +13,8 @@
  * so the beat bookkeeping is unit-testable without Web Audio.
  */
 
+import { audioOutput } from '../../audio/context.ts';
+
 export const CALIBRATION_BPM = 100;
 /** Seconds between start() and beat 0, like the player's start lead. */
 export const METRONOME_START_LEAD_S = 0.1;
@@ -269,7 +271,7 @@ export function createClickSink(ctx: AudioContext, volume = 0.8): ClickSink {
   const accent = createClickBuffer(ctx, ACCENT);
   const gain = ctx.createGain();
   gain.gain.value = volume;
-  gain.connect(ctx.destination);
+  gain.connect(audioOutput(ctx));
   return {
     now: () => ctx.currentTime,
     schedule(when, beatIndex) {

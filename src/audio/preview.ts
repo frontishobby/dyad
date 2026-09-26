@@ -6,7 +6,7 @@
  * Decoded buffers are cached per URL for the session so browsing back and
  * forth does not re-decode. Nothing here creates an <audio> element.
  */
-import { getAudioContext } from './context.ts';
+import { audioOutput, getAudioContext } from './context.ts';
 
 /** Preview slice length and fades, ms. */
 export const PREVIEW_LENGTH_MS = 14_000;
@@ -79,7 +79,7 @@ export function createPreviewPlayer(ctx: AudioContext = getAudioContext(), fetch
           const fade = PREVIEW_FADE_MS / 1000;
           gain.gain.setValueAtTime(0, now);
           gain.gain.linearRampToValueAtTime(PREVIEW_GAIN, now + fade);
-          source.connect(gain).connect(ctx.destination);
+          source.connect(gain).connect(audioOutput(ctx));
           source.start(now, start);
           current = { source, gain };
         })

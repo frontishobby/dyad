@@ -113,3 +113,40 @@ describe('getAudioContext / resumeAudio', () => {
     expect(getAudioContext()).toBe(StubAudioContext.instances[0]);
   });
 });
+
+describe('audioOutput / setMasterVolume', () => {
+  it('gives each context one master gain into its destination', async () => {
+    const { audioOutput } = await freshModule();
+    const ctx = new FakeAudioContext();
+    const out = audioOutput(ctx.asReal());
+    expect(audioOutput(ctx.asReal())).toBe(out);
+    expect(ctx.gains).toEqual([out]);
+    expect(ctx.lastGain.connections).toEqual([ctx.destination]);
+  });
+
+  it('applies the volume to existing and later masters, clamped to 0–1', async () => {
+    const { audioOutput, setMasterVolume } = await freshModule();
+    const a = new FakeAudioContext();
+    audioOutput(a.asReal());
+    setMasterVolume(0.4);
+    expect(a.lastGain.gain.value).toBe(0.4);
+
+    const b = new FakeAudioContext();
+    audioOutput(b.asReal());
+    expect(b.lastGain.gain.value).toBe(0.4);
+
+    setMasterVolume(3);
+    expect(a.lastGain.gain.value).toBe(1);
+    setMasterVolume(NaN);
+    expect(b.lastGain.gain.value).toBe(0);
+  });
+
+  it('never creates a context by itself', async () => {
+    vi.stubGlobal('AudioContext', StubAudioContext);
+    StubAudioContext.instances = [];
+    const { setMasterVolume } = await freshModule();
+    setMasterVolume(0.5);
+    expect(StubAudioContext.instances).toHaveLength(0);
+    vi.unstubAllGlobals();
+  });
+});

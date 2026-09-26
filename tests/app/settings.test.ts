@@ -41,6 +41,13 @@ describe('validateSettings', () => {
     expect(s.hitSoundVolume).toBe(1);
   });
 
+  it('defaults the master volume to 50% and clamps it like the hit-sound volume', () => {
+    expect(DEFAULT_SETTINGS.masterVolume).toBe(0.5);
+    expect(validateSettings({}).masterVolume).toBe(0.5);
+    expect(validateSettings({ masterVolume: '-1' }).masterVolume).toBe(0);
+    expect(validateSettings({ masterVolume: 0.333 }).masterVolume).toBe(0.33);
+  });
+
   it('rounds hiSpeed to 0.1, offsets to whole ms, volume to 0.01', () => {
     const s = validateSettings({ hiSpeed: 1.2000000001, audioOffset: 12.6, hitSoundVolume: 0.333 });
     expect(s.hiSpeed).toBe(1.2);

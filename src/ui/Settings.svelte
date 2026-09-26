@@ -221,6 +221,26 @@
       </div>
 
       <div class="row">
+        <label class="label" for="master-volume">마스터 볼륨</label>
+        <div class="control">
+          <input
+            id="master-volume"
+            type="range"
+            min={SETTINGS_RANGE.volume.min}
+            max={SETTINGS_RANGE.volume.max}
+            step={SETTINGS_RANGE.volume.step}
+            value={s.masterVolume}
+            aria-valuetext={formatPercent(s.masterVolume)}
+            oninput={(e) => {
+              const n = numberOf(e);
+              if (n !== null) settings.update({ masterVolume: n });
+            }}
+          />
+          <span class="dim caption">{formatPercent(s.masterVolume)}</span>
+        </div>
+      </div>
+
+      <div class="row">
         <label class="label" for="hit-volume">타격음</label>
         <div class="control">
           <input

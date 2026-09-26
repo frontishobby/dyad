@@ -12,6 +12,8 @@ export interface Settings {
   /** Multiplier on scroll speed; 1 = default lead time. */
   hiSpeed: number;
   theme: 'dark' | 'light';
+  /** Scales every sound: song, previews, hit sounds, metronome. */
+  masterVolume: number;
   hitSoundVolume: number;
   /** Set after the calibration screen has been completed at least once. */
   calibrated: boolean;
@@ -23,6 +25,7 @@ export const DEFAULT_SETTINGS: Settings = {
   inputOffset: 0,
   hiSpeed: 1,
   theme: 'dark',
+  masterVolume: 0.5,
   hitSoundVolume: 0.8,
   calibrated: false,
 };
