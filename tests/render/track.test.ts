@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import type { Chart, Engine, EngineEvent, EngineState, InputLogEntry, Key, NoteView } from '../../src/core/types.ts';
 import { DARK, MOTION, SHAPE, hexToNumber } from '../../src/design/tokens.ts';
 import { computeLayout, localFrame, seamPosition } from '../../src/render/layout.ts';
+import { bigDiameter } from '../../src/render/shapes.ts';
 import { createTrackRenderer } from '../../src/render/track.ts';
 import type { Orientation } from '../../src/render/types.ts';
 
@@ -56,7 +57,7 @@ function byLabel(root: Container, label: string): Container {
 /** Visible pooled note objects in the note layer (regular Graphics or big Containers). */
 function visibleNotes(view: Container): Container[] {
   const world = byLabel(view, 'world');
-  const noteLayer = world.children[3] as Container;
+  const noteLayer = world.children[4] as Container;
   return noteLayer.children.filter((c) => c.visible);
 }
 
@@ -69,7 +70,7 @@ function visibleLines(view: Container): Graphics[] {
 /** The receptor ring's flash overlay (gate layer: line, ring, flash, then the ghosts). */
 function seamFlash(view: Container): Graphics {
   const world = byLabel(view, 'world');
-  return (world.children[2] as Container).children[2] as Graphics;
+  return (world.children[3] as Container).children[2] as Graphics;
 }
 
 function hudTexts(view: Container): Text[] {
@@ -250,7 +251,7 @@ describe('createTrackRenderer', () => {
     const { renderer, engine, layout } = make(orientation, [{ t: 1000, k: 'd', big: false }]);
     expect(hudTexts(renderer.view).map((t) => t.text).sort()).toEqual(['Great', 'Miss', 'OK']);
     const world = byLabel(renderer.view, 'world');
-    const gateLayer = world.children[2] as Container;
+    const gateLayer = world.children[3] as Container;
     expect(gateLayer.children).toHaveLength(9); // line, ring, flash, then per type: regular ghost + two big halves
     const [line, ring, flash, donGhost, donL, donR, katGhost] = gateLayer.children as [Graphics, Graphics, Graphics, Graphics, Graphics, Graphics, Graphics, Graphics, Graphics];
     renderer.frame(500, engine);
@@ -320,7 +321,7 @@ describe('createTrackRenderer', () => {
   it('hit burst: the note outline grows from the seam and fades over MOTION.burst; Great starts white', () => {
     const { renderer, engine, layout } = make('landscape', [{ t: 1000, k: 'k', big: false }, { t: 2000, k: 'd', big: true }]);
     const world = byLabel(renderer.view, 'world');
-    const burstLayer = world.children[4] as Container;
+    const burstLayer = world.children[5] as Container;
     const bursts = burstLayer.children as Graphics[];
     expect(bursts.length).toBeGreaterThan(0);
     renderer.frame(500, engine);
@@ -360,7 +361,7 @@ describe('createTrackRenderer', () => {
     missed.renderer.apply([{ type: 'note', index: 0, judgement: 'miss', deltaMs: null, key: null, big: false, strong: false }], 1200);
     missed.renderer.frame(1200, missed.engine);
     const mWorld = byLabel(missed.renderer.view, 'world');
-    expect((mWorld.children[4] as Container).children.every((x) => !x.visible)).toBe(true);
+    expect((mWorld.children[5] as Container).children.every((x) => !x.visible)).toBe(true);
     missed.renderer.destroy();
 
     // Reduced motion: no burst at all.
@@ -368,7 +369,7 @@ describe('createTrackRenderer', () => {
     rm.engine.set(0, { status: 'hit', judgement: 'great' });
     rm.renderer.apply([{ type: 'note', index: 0, judgement: 'great', deltaMs: 0, key: 'KL', big: false, strong: false }], 1000);
     rm.renderer.frame(1000, rm.engine);
-    expect((byLabel(rm.renderer.view, 'world').children[4] as Container).children.every((x) => !x.visible)).toBe(true);
+    expect((byLabel(rm.renderer.view, 'world').children[5] as Container).children.every((x) => !x.visible)).toBe(true);
     rm.renderer.destroy();
     renderer.destroy();
   });
@@ -389,7 +390,10 @@ describe('createTrackRenderer', () => {
     const words = hudTexts(renderer.view);
     const great = words.find((t) => t.text === 'Great') as Text;
     const miss = words.find((t) => t.text === 'Miss') as Text;
-    const baseY = layout.track.y - 40;
+    // Just above the receptor ring (big-note diameter, centred on the band), inside the band.
+    const baseY = layout.track.y + layout.W / 2 - bigDiameter(layout.leadPx) / 2 - 8 - 40 / 2;
+    expect(baseY).toBeGreaterThan(layout.track.y);
+    expect(great.x).toBeCloseTo(seamPosition(layout), 9);
     engine.set(0, { status: 'hit', judgement: 'great' });
     renderer.apply([{ type: 'note', index: 0, judgement: 'great', deltaMs: 0, key: 'DL', big: false, strong: false }], 1000);
     renderer.frame(1000, engine);
@@ -422,12 +426,51 @@ describe('createTrackRenderer', () => {
     rm.renderer.destroy();
   });
 
+  it('combo milestone: the multiple of 50 shows faintly over the track centre, grows and fades over MOTION.comboBurst', () => {
+    const { renderer, engine, layout } = make('landscape', [{ t: 1000, k: 'd', big: false }]);
+    const world = byLabel(renderer.view, 'world');
+    const burst = (world.children[2] as Container).children[0] as Text;
+    renderer.frame(0, engine);
+    expect(burst.visible).toBe(false);
+    engine.state.combo = 49;
+    renderer.frame(100, engine);
+    expect(burst.visible).toBe(false);
+    engine.state.combo = 51; // jumping over 50 still counts
+    renderer.frame(200, engine);
+    expect(burst.visible).toBe(true);
+    expect(burst.text).toBe('50');
+    expect(burst.scale.x).toBeCloseTo(1, 9);
+    expect(burst.alpha).toBeGreaterThan(0);
+    expect(burst.alpha).toBeLessThan(0.3);
+    // Upright on screen, at the band centre.
+    const p = burst.getGlobalPosition();
+    expect(p.x).toBeCloseTo(layout.track.x + layout.track.w / 2, 6);
+    expect(p.y).toBeCloseTo(layout.track.y + layout.track.h / 2, 6);
+    expect(world.rotation + burst.rotation).toBeCloseTo(0, 9);
+    const early = burst.alpha;
+    renderer.frame(200 + MOTION.comboBurst / 2, engine);
+    expect(burst.scale.x).toBeGreaterThan(1);
+    expect(burst.alpha).toBeLessThan(early);
+    renderer.frame(200 + MOTION.comboBurst, engine);
+    expect(burst.visible).toBe(false);
+    // A break resets; climbing back past 50 shows it again, 100 shows 100.
+    engine.state.combo = 0;
+    renderer.frame(2000, engine);
+    engine.state.combo = 50;
+    renderer.frame(2100, engine);
+    expect(burst.visible).toBe(true);
+    engine.state.combo = 100;
+    renderer.frame(2200, engine);
+    expect(burst.text).toBe('100');
+    renderer.destroy();
+  });
+
   it('beat pulse: the seam line brightens on each beat (fully on a bar) and the band lifts on a bar, both decaying', () => {
     // 120 BPM, 4/4: beats at 0, 500, 1000, 1500; bars at 0, 2000.
     const { renderer, engine } = make('landscape', [{ t: 5000, k: 'd', big: false }]);
     const world = byLabel(renderer.view, 'world');
     const band = (world.children[0] as Container).children[0] as Graphics;
-    const line = (world.children[2] as Container).children[0] as Graphics;
+    const line = (world.children[3] as Container).children[0] as Graphics;
     const dim = hexToNumber(DARK.textDim);
     const text = hexToNumber(DARK.text);
     // On the bar: line fully bright, band lifted.
@@ -445,7 +488,7 @@ describe('createTrackRenderer', () => {
     renderer.destroy();
 
     const rm = make('landscape', [{ t: 5000, k: 'd', big: false }], { reducedMotion: true });
-    const rmLine = ((byLabel(rm.renderer.view, 'world').children[2] as Container).children[0]) as Graphics;
+    const rmLine = ((byLabel(rm.renderer.view, 'world').children[3] as Container).children[0]) as Graphics;
     rm.renderer.frame(2000, rm.engine);
     expect(rmLine.tint).toBe(dim);
     rm.renderer.destroy();
@@ -453,7 +496,7 @@ describe('createTrackRenderer', () => {
 
   it('a Miss dips the landscape seam line for cellDecay', () => {
     const { renderer, engine } = make('landscape', [{ t: 1000, k: 'd', big: false }]);
-    const line = (byLabel(renderer.view, 'world').children[2] as Container).children[0] as Graphics;
+    const line = (byLabel(renderer.view, 'world').children[3] as Container).children[0] as Graphics;
     renderer.frame(900, engine);
     expect(line.alpha).toBeCloseTo(1, 9);
     engine.set(0, { status: 'missed', judgement: 'miss' });
@@ -484,7 +527,7 @@ describe('createTrackRenderer', () => {
     for (let i = 0; i < 200; i++) notes.push({ t: 500 + i * 100, k: i % 2 ? 'k' : 'd', big: i % 7 === 0 });
     const { renderer, engine } = make('landscape', notes);
     const world = byLabel(renderer.view, 'world');
-    const noteLayer = world.children[3] as Container;
+    const noteLayer = world.children[4] as Container;
     const lineLayer = world.children[1] as Container;
     renderer.frame(0, engine);
     const before = noteLayer.children.length + lineLayer.children.length;
@@ -502,7 +545,7 @@ describe('createTrackRenderer', () => {
     const leadMs = 750;
     const renderer = createTrackRenderer({ chart: c, theme: DARK, layout, leadMs, reducedMotion: false });
     const world = byLabel(renderer.view, 'world');
-    const noteLayer = world.children[3] as Container; // bg, lines, gate, notes (then the mask)
+    const noteLayer = world.children[4] as Container; // bg, lines, combo, gate, notes (then the mask)
     // Bodies are inserted at index 0 in chart order, so the spinner ends up first.
     const [spinnerBody, rollBody] = noteLayer.children.slice(0, 2) as [Graphics, Graphics];
 

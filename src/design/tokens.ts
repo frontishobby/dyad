@@ -88,12 +88,17 @@ export const SHAPE = {
 } as const;
 
 /** Motion (DESIGN §5), ms. */
+/** Combo brightens once every this many (DESIGN §5). */
+export const COMBO_STEP = 50;
+
 export const MOTION = {
   hitVanish: 90,
   cellDecay: 120,
   comboPulse: 160,
   /** Combo milestone (every 50): the bigger bump. */
   comboMilestone: 360,
+  /** Combo milestone: the faint big number over the track grows and fades over this. */
+  comboBurst: 800,
   /** Hit burst: the note's outline grows out of the seam and fades over this. */
   burst: 240,
   /** Judgement word pops in over this, then holds and fades (track.ts JUDGEMENT_TEXT_MS). */

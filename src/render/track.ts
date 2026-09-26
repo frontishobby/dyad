@@ -14,8 +14,8 @@
 import { Container, Graphics, GraphicsContext, Text, TextStyle } from 'pixi.js';
 import type { Chart, Engine, EngineEvent, Judgement, Key, NoteKind } from '../core/types.ts';
 import { keyHand, keyKind, partnerKey } from '../core/types.ts';
-import { MOTION, SHAPE, TYPE, hexToNumber, type Theme } from '../design/tokens.ts';
-import { localFrame, localToScreen, nearClipPx, seamPosition, trackNearPx, type Vec2 } from './layout.ts';
+import { COMBO_STEP, MOTION, SHAPE, TYPE, hexToNumber, type Theme } from '../design/tokens.ts';
+import { localFrame, localToScreen, nearClipPx, screenToLocal, seamPosition, trackNearPx, type Vec2 } from './layout.ts';
 import {
   bigDiameter,
   brickContext,
@@ -48,8 +48,8 @@ const SPAWN_MARGIN_N = 1;
 /** Touch-zone silhouette diameter as a fraction of the cell's shorter side, and its alpha in the type colour. */
 const SILHOUETTE_FRACTION = 0.36;
 const SILHOUETTE_ALPHA = 0.5;
-/** Judgement word: landscape sits this far above the track band, at the seam x. */
-const JUDGEMENT_ABOVE_PX = 40;
+/** Judgement word: landscape sits this far above the receptor ring's top, at the seam x. */
+const JUDGEMENT_ABOVE_RING_PX = 8;
 /** Judgement word: portrait sits this many N on the spawn side of the seam, over the lane. */
 const JUDGEMENT_P_N = 3;
 /** Judgement word size per orientation (DESIGN §3: 40; portrait lanes are narrower). */
@@ -83,6 +83,10 @@ const BAND_PULSE = 0.6;
 const SEAM_MISS_ALPHA = 0.35;
 /** Spinner countdown label pops to (1 + this) × on each tick. */
 const LABEL_POP = 0.3;
+/** Combo milestone number over the track centre: size (the one text above the type scale), peak alpha, growth over MOTION.comboBurst. */
+const COMBO_BURST_FONT = TYPE.size.hero * 2;
+const COMBO_BURST_ALPHA = 0.18;
+const COMBO_BURST_GROW = 0.45;
 
 // key index: KL 0, KR 1, DL 2, DR 3
 const KEY_ORDER: readonly Key[] = ['KL', 'KR', 'DL', 'DR'];
@@ -337,7 +341,20 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   const gateLayer = new Container();
   const noteLayer = new Container();
   const burstLayer = new Container();
-  world.addChild(bgLayer, lineLayer, gateLayer, noteLayer, burstLayer);
+  const comboLayer = new Container();
+  world.addChild(bgLayer, lineLayer, comboLayer, gateLayer, noteLayer, burstLayer);
+
+  // Combo milestone: one faint number over the track centre, under the gate and notes.
+  // It lives in the world frame (so the band covers nothing of it) and is counter-rotated upright.
+  const comboBurst = new Text({
+    text: '',
+    style: new TextStyle({ fontFamily: TYPE.display, fontSize: COMBO_BURST_FONT, fontWeight: '700', fill: C.text }),
+    anchor: 0.5,
+  });
+  comboBurst.visible = false;
+  comboLayer.addChild(comboBurst);
+  let comboBurstAt = -Infinity;
+  let lastCombo = 0;
 
   const zoneLayer = new Container();
   const labelLayer = new Container();
@@ -649,15 +666,23 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     }
 
     // Judgement words: three prebuilt texts, one visible at a time.
-    // Landscape: in the band above the track, centred on the seam x (DESIGN §4).
+    // Landscape: just above the receptor ring, centred on the seam x (DESIGN §4).
     // Portrait: over the lane, JUDGEMENT_P_N × N on the spawn side of the seam.
-    const jc =
-      layout.orientation === 'landscape'
-        ? { x: seamPosition(layout), y: layout.track.y - JUDGEMENT_ABOVE_PX }
-        : localToScreen(layout, JUDGEMENT_P_N * N, 0.5);
+    const judgementSize = JUDGEMENT_FONT[layout.orientation];
+    let jc: Vec2;
+    if (layout.orientation === 'landscape') {
+      const ring = localToScreen(layout, 0, 0.5);
+      jc = { x: ring.x, y: ring.y - D / 2 - JUDGEMENT_ABOVE_RING_PX - judgementSize / 2 };
+    } else {
+      jc = localToScreen(layout, JUDGEMENT_P_N * N, 0.5);
+    }
     judgementBase.x = jc.x;
     judgementBase.y = jc.y;
-    const judgementSize = JUDGEMENT_FONT[layout.orientation];
+
+    const t = layout.track;
+    const centre = screenToLocal(layout, t.x + t.w / 2, t.y + t.h / 2);
+    comboBurst.position.set(centre.u * W, -centre.p);
+    comboBurst.rotation = -frame.rotation;
     const words: [string, number][] = [
       ['Great', C.text],
       ['OK', C.textDim],
@@ -851,6 +876,26 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
       text.alpha = k < JUDGEMENT_FADE_FROM ? 1 : 1 - (k - JUDGEMENT_FADE_FROM) / (1 - JUDGEMENT_FADE_FROM);
       text.position.set(judgementBase.x, judgementBase.y + dy);
     }
+  }
+
+  /**
+   * Combo milestone: when the combo crosses a multiple of COMBO_STEP, that
+   * multiple shows faintly over the track centre, growing and fading out over
+   * MOTION.comboBurst. Reduced motion: it only fades.
+   */
+  function updateComboBurst(songMs: number, combo: number): void {
+    if (combo > lastCombo && Math.floor(combo / COMBO_STEP) > Math.floor(lastCombo / COMBO_STEP)) {
+      comboBurst.text = String(Math.floor(combo / COMBO_STEP) * COMBO_STEP);
+      comboBurstAt = songMs;
+    }
+    lastCombo = combo;
+    const k = (songMs - comboBurstAt) / MOTION.comboBurst;
+    const on = k >= 0 && k < 1;
+    comboBurst.visible = on;
+    if (!on) return;
+    const eased = 1 - (1 - k) * (1 - k) * (1 - k);
+    comboBurst.scale.set(reducedMotion ? 1 : 1 + COMBO_BURST_GROW * eased);
+    comboBurst.alpha = COMBO_BURST_ALPHA * (1 - k);
   }
 
   // ─── hit bursts
@@ -1161,6 +1206,7 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     updateZones(songMs);
     updateBursts(songMs);
     updateJudgement(songMs);
+    updateComboBurst(songMs, engine.state.combo);
   }
 
   function setLayout(next: Layout): void {

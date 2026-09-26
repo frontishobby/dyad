@@ -4,6 +4,7 @@
  */
 import type { EngineEvent, Judgement } from '../../core/types.ts';
 import type { Layout } from '../../render/types.ts';
+import { COMBO_STEP } from '../../design/tokens.ts';
 
 /** Score is always 7 digits wide: "1,000,000" is the widest value. */
 export const SCORE_DIGITS = 7;
@@ -12,8 +13,7 @@ export const FIGURE_SPACE = ' ';
 /** U+2008 PUNCTUATION SPACE: the width of a comma / period. */
 export const PUNCTUATION_SPACE = ' ';
 
-/** Combo brightens once every this many (DESIGN §5). */
-export const COMBO_STEP = 50;
+export { COMBO_STEP };
 /** How long a judgement word stays on screen after the last judged note. */
 export const JUDGEMENT_HOLD_MS = 500;
 /** Progress is quantised so the bar only touches the DOM ~1000× per song. */
