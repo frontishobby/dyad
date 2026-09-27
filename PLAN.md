@@ -123,7 +123,7 @@ interface Chart {
 
 ### 곡 폴더
 ```
-songs-src/<id>/             원본 (WAV 는 git 에 넣지 않음)
+songs-src/<id>/             원본 (WAV 와 자켓 원본은 git 에 넣지 않음)
   easy.osu | normal.osu | hard.osu   난이도별 채보, 있는 것만
   song.wav, jacket.png, song.json    { title, artist, audioOffset, bpm? }
 

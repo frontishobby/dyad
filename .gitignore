@@ -5,4 +5,5 @@ dist/
 *.log
 .DS_Store
 songs-src/**/*.wav
+songs-src/**/jacket.*
 colab/*_output.ipynb

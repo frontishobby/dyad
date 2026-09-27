@@ -32,8 +32,9 @@ npm run songs:build                        # → public/songs/<id>/
 The build converts each `.osu` to `chart.<tier>.json` (deterministic: same
 `.osu`, same bytes), encodes the audio to WebM/Opus, makes AVIF jackets,
 computes the real osu!taiko star rating with [rosu-pp](https://github.com/MaxOhn/rosu-pp-js)
-and writes `meta.json` and `public/songs/index.json`. `songs-src/**/*.wav` is
-ignored by git; everything under `public/songs/` is committed.
+and writes `meta.json` and `public/songs/index.json`. The source audio and
+jacket (`songs-src/**/*.wav`, `songs-src/**/jacket.*`) are ignored by git, so
+clones stay light; everything under `public/songs/` is committed.
 
 The notebook can also run headless with the [Colab CLI](https://github.com/googlecolab/colab-cli);
 see [`colab/README.md`](colab/README.md).
