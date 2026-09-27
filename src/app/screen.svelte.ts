@@ -10,6 +10,7 @@ export type Screen =
   | { name: 'boot' }
   | { name: 'title' }
   | { name: 'settings' }
+  | { name: 'credits' }
   | { name: 'calibrate'; returnTo: 'title' | 'settings' }
   | { name: 'play'; song: SongMeta; chart: SongChartRef; auto?: boolean }
   | {

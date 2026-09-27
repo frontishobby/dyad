@@ -15,6 +15,7 @@
   import { LAYOUT } from './design/tokens.ts';
   import Boot from './ui/Boot.svelte';
   import Calibrate from './ui/Calibrate.svelte';
+  import Credits from './ui/Credits.svelte';
   import Play from './ui/Play.svelte';
   import Result from './ui/Result.svelte';
   import SettingsScreen from './ui/Settings.svelte';
@@ -27,6 +28,16 @@
   // Importing theme.svelte.ts injects the tokens into <html>; reading it here
   // keeps the root in step with the current theme name.
   const current = $derived(screen.current);
+
+  let frameEl = $state<HTMLDivElement>();
+
+  // Each screen mounts fresh, but the scroller does not: opening credits from the
+  // bottom of settings would land scrolled past its header.
+  $effect(() => {
+    void current;
+    frameEl?.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  });
 
   // Only stores the value (and retunes live master gains); never creates the AudioContext.
   $effect.pre(() => setMasterVolume(settings.value.masterVolume));
@@ -64,6 +75,8 @@
       <Title />
     {:else if current.name === 'settings'}
       <SettingsScreen />
+    {:else if current.name === 'credits'}
+      <Credits />
     {:else if current.name === 'calibrate'}
       <Calibrate returnTo={current.returnTo} />
     {:else if current.name === 'play'}
@@ -82,6 +95,7 @@
 
 {#if framed}
   <div
+    bind:this={frameEl}
     class="frame"
     data-theme={theme.value.name}
     style:width="{FRAME_W}px"

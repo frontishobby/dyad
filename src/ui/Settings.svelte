@@ -264,6 +264,7 @@
 
   <footer class="foot">
     <Button id="settings-reset" onclick={() => settings.reset()}>기본값으로</Button>
+    <Button id="open-credits" onclick={() => screen.go({ name: 'credits' })}>크레딧</Button>
   </footer>
 </main>
 
