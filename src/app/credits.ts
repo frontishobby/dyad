@@ -44,6 +44,16 @@ export const MUSIC: readonly MusicCredit[] = [
     },
   },
   { title: 'Malice', artist: 'Original' },
+  {
+    title: 'Skybreak',
+    artist: 'ISAo',
+    source: {
+      title: 'Electronic Dance Uplifting Trailer',
+      url: 'https://opengameart.org/content/electronic-dance-uplifting-trailer',
+      license: LICENSES.ogaBy3,
+      changes: '제목 변경',
+    },
+  },
   { title: 'Tailwind', artist: 'Original' },
 ];
 

@@ -1,0 +1,52 @@
+{
+  "id": "skybreak",
+  "title": "Skybreak",
+  "artist": "ISAo",
+  "palette": [
+    "#B8C9E9",
+    "#1644AA",
+    "#6895D6"
+  ],
+  "audioOffset": 0,
+  "bpm": [
+    138,
+    138
+  ],
+  "durationMs": 120289,
+  "previewMs": 19348,
+  "audio": "audio.a005b1b5.webm",
+  "jacket": "jacket.a9be97f1.avif",
+  "jacketSm": "jacket-sm.111b3ce9.avif",
+  "charts": [
+    {
+      "tier": "easy",
+      "name": "Easy",
+      "file": "chart.easy.json",
+      "hash": "bd60a783dd2b34b44e499c69f18b0ddb2dfa1759b1dc9bc1ce4f28bf369f74ed",
+      "od": 4,
+      "notes": 340,
+      "stars": 2.48,
+      "level": 4
+    },
+    {
+      "tier": "normal",
+      "name": "Normal",
+      "file": "chart.normal.json",
+      "hash": "7c606542c277ab68728c72c4e2e3321f8ec3b9961df74e50c179351841d9c81b",
+      "od": 5,
+      "notes": 568,
+      "stars": 3.58,
+      "level": 6
+    },
+    {
+      "tier": "hard",
+      "name": "Hard",
+      "file": "chart.hard.json",
+      "hash": "dd824f7f31544982e8cf141bca89add93a3cea4085d6826e6b961f7499e5acea",
+      "od": 6,
+      "notes": 696,
+      "stars": 4.83,
+      "level": 8
+    }
+  ]
+}
