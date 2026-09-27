@@ -214,9 +214,9 @@
       "title": "Malice",
       "artist": "Original",
       "palette": [
-        "#3B3545",
-        "#7B7486",
-        "#A598AA"
+        "#453A47",
+        "#CBACB5",
+        "#8C6C76"
       ],
       "audioOffset": 0,
       "bpm": [
@@ -226,8 +226,8 @@
       "durationMs": 172150,
       "previewMs": 27867,
       "audio": "audio.5b614d55.webm",
-      "jacket": "jacket.188960cb.avif",
-      "jacketSm": "jacket-sm.2cdf5a3f.avif",
+      "jacket": "jacket.71283c40.avif",
+      "jacketSm": "jacket-sm.f7c134bc.avif",
       "charts": [
         {
           "tier": "easy",
