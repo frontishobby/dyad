@@ -537,17 +537,19 @@ describe('createTrackRenderer', () => {
     renderer.destroy();
   });
 
-  it('beat and bar lines scroll with time and are culled to the track', () => {
+  it('only bar lines are drawn; they scroll with time and are culled to the track', () => {
     const { renderer, engine, layout, leadMs } = make('portrait', [{ t: 4000, k: 'd', big: false }]);
+    // 750 ms lead, 500 ms/beat in 4/4: the beat at 500 is in view but never drawn, only the bar at 0
+    // (nothing behind: the track ends before the seam in portrait).
     renderer.frame(0, engine);
-    const lines = visibleLines(renderer.view);
-    // 750 ms lead at 500 ms/beat: beats at 0 and 500 visible (plus nothing behind: track ends before the seam in portrait).
-    expect(lines.length).toBe(2);
-    const ys = lines.map((l) => l.y).sort((a, b) => a - b);
-    expect(ys[1]).toBeCloseTo(0, 9);
-    expect(ys[0]).toBeCloseTo(-(500 / leadMs) * layout.leadPx, 9);
-    renderer.frame(2000, engine);
-    expect(visibleLines(renderer.view).length).toBe(2);
+    let lines = visibleLines(renderer.view);
+    expect(lines.length).toBe(1);
+    expect(lines[0]?.y).toBeCloseTo(0, 9);
+    // Beats at 1500 and 2000 in view; only the bar at 2000 is drawn.
+    renderer.frame(1500, engine);
+    lines = visibleLines(renderer.view);
+    expect(lines.length).toBe(1);
+    expect(lines[0]?.y).toBeCloseTo(-(500 / leadMs) * layout.leadPx, 9);
     renderer.destroy();
   });
 

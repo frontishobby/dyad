@@ -7,7 +7,7 @@
  * The gate is a judgement line in both orientations (no cells); a held key
  * shows its shape on the line, and the touch zones themselves light on press.
  *
- * Hot path: frame() allocates nothing. Notes and beat lines are pooled
+ * Hot path: frame() allocates nothing. Notes and bar lines are pooled
  * Graphics that share prebuilt GraphicsContexts; per-note effect state lives
  * in typed arrays; every colour is a precomputed number.
  */
@@ -415,7 +415,6 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   let katPool: NotePool | null = null;
   let bigDonPool: NotePool | null = null;
   let bigKatPool: NotePool | null = null;
-  let beatPool: RegularPool | null = null;
   let barPool: RegularPool | null = null;
   let noteMask: Graphics | null = null;
   /** Band background (white, tinted surface; the bar pulse lifts it toward raised). */
@@ -508,7 +507,6 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     if (bigKatPool) growNotes(bigKatPool, noteLayer, maxInWindow(noteTimes.bk, noteTimes.bk.length, windowMs));
     const lineWindow = leadMs + nearLineMs;
     const maxLines = maxInWindow(lines.t, lines.count, lineWindow) + 1;
-    if (beatPool) growRegular(beatPool, lineLayer, maxLines);
     if (barPool) growRegular(barPool, lineLayer, maxLines);
   }
 
@@ -518,11 +516,10 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     if (katPool) destroyPool(katPool);
     if (bigDonPool) destroyPool(bigDonPool);
     if (bigKatPool) destroyPool(bigKatPool);
-    if (beatPool) destroyPool(beatPool);
     if (barPool) destroyPool(barPool);
     donPool = katPool = null;
     bigDonPool = bigKatPool = null;
-    beatPool = barPool = null;
+    barPool = null;
     if (noteMask) {
       noteLayer.mask = null;
       noteMask.destroy();
@@ -605,11 +602,9 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     bigDonPool = makeNotePool(noteCtx.bigDonL, noteCtx.bigDonR, noteCtx.bigDonRim);
     bigKatPool = makeNotePool(noteCtx.bigKatL, noteCtx.bigKatR, noteCtx.bigKatRim);
 
-    // Beat / bar lines.
-    const beatCtx = lineContext(W, C.line);
+    // Bar lines only: a line on every beat made the band a fast-moving grating (dizzying).
     const barCtx = lineContext(W, C.faint);
-    staticContexts.push(beatCtx, barCtx);
-    beatPool = makeRegularPool(beatCtx, lineLayer, 0);
+    staticContexts.push(barCtx);
     barPool = makeRegularPool(barCtx, lineLayer, 0);
 
     // The gate: a thin judgement line across the width axis in both
@@ -831,7 +826,6 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   }
 
   function placeLines(songMs: number): void {
-    const beat = beatPool as RegularPool;
     const bar = barPool as RegularPool;
     const nearT = songMs - nearLineMs;
     const farT = songMs + leadMs;
@@ -839,10 +833,8 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     for (; i < lines.count; i++) {
       const t = lines.t[i] as number;
       if (t > farT) break;
-      const p = scrollP(t, songMs);
-      placeLine(lines.bar[i] ? bar : beat, -p);
+      if (lines.bar[i]) placeLine(bar, -scrollP(t, songMs));
     }
-    hideUnused(beat);
     hideUnused(bar);
   }
 
