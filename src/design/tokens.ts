@@ -79,6 +79,13 @@ export const SHAPE = {
   bigCircle: 1.55,
   /** Seam ring stroke and burst outline stroke = regular diameter × this. */
   ringStroke: 0.06,
+  /** Note rim, inside the disc's edge: the on-type ink outline, then the white ring within it (× regular diameter, big notes too). */
+  rimInk: 0.05,
+  rimLight: 0.07,
+  /** Notes on a beat: widen across the width axis by this, and shorten along travel by noteSquash × that (bar = full, beat = noteBeatFraction). */
+  noteBounce: 0.12,
+  noteSquash: 0.5,
+  noteBeatFraction: 0.55,
   /** Gate gap in units of N (the seam sits in the middle of the portrait gate rect). */
   gateGap: 1 / 8,
   /** Hit push toward the gate, in units of N. */

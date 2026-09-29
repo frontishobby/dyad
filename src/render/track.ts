@@ -172,18 +172,23 @@ interface RegularPool {
   lastUsed: number;
 }
 
-interface BigView {
+/**
+ * A pooled note: the tinted face under its rim. A regular note's face is one
+ * disc (`right` null); a big note's is two halves.
+ */
+interface NoteView {
   root: Container;
-  left: Graphics;
-  right: Graphics;
-  seam: Graphics;
+  /** The whole disc, or a big note's left half. */
+  face: Graphics;
+  right: Graphics | null;
+  rim: Graphics;
 }
 
-interface BigPool {
-  leftCtx: GraphicsContext;
-  rightCtx: GraphicsContext;
-  seamCtx: GraphicsContext;
-  items: BigView[];
+interface NotePool {
+  faceCtx: GraphicsContext;
+  rightCtx: GraphicsContext | null;
+  rimCtx: GraphicsContext;
+  items: NoteView[];
   used: number;
   lastUsed: number;
 }
@@ -202,31 +207,35 @@ function growRegular(pool: RegularPool, layer: Container, size: number): void {
   }
 }
 
-function makeBigView(pool: BigPool): BigView {
+function makeNoteView(pool: NotePool): NoteView {
   const root = new Container();
   root.visible = false;
-  const left = new Graphics({ context: pool.leftCtx });
-  const right = new Graphics({ context: pool.rightCtx });
-  const seam = new Graphics({ context: pool.seamCtx });
-  root.addChild(left, right, seam);
-  return { root, left, right, seam };
+  const face = new Graphics({ context: pool.faceCtx });
+  const right = pool.rightCtx ? new Graphics({ context: pool.rightCtx }) : null;
+  const rim = new Graphics({ context: pool.rimCtx });
+  root.addChild(face);
+  if (right) root.addChild(right);
+  root.addChild(rim);
+  return { root, face, right, rim };
 }
 
-function makeBigPool(leftCtx: GraphicsContext, rightCtx: GraphicsContext, seamCtx: GraphicsContext, layer: Container, size: number): BigPool {
-  const pool: BigPool = { leftCtx, rightCtx, seamCtx, items: [], used: 0, lastUsed: 0 };
-  growBig(pool, layer, size);
-  return pool;
+function makeNotePool(
+  faceCtx: GraphicsContext,
+  rightCtx: GraphicsContext | null,
+  rimCtx: GraphicsContext,
+): NotePool {
+  return { faceCtx, rightCtx, rimCtx, items: [], used: 0, lastUsed: 0 };
 }
 
-function growBig(pool: BigPool, layer: Container, size: number): void {
+function growNotes(pool: NotePool, layer: Container, size: number): void {
   while (pool.items.length < size) {
-    const v = makeBigView(pool);
+    const v = makeNoteView(pool);
     layer.addChild(v.root);
     pool.items.push(v);
   }
 }
 
-function hideUnused(pool: RegularPool | BigPool): void {
+function hideUnused(pool: RegularPool | NotePool): void {
   const items = pool.items;
   for (let i = pool.used; i < pool.lastUsed; i++) {
     const it = items[i];
@@ -238,7 +247,7 @@ function hideUnused(pool: RegularPool | BigPool): void {
   pool.used = 0;
 }
 
-function destroyPool(pool: RegularPool | BigPool): void {
+function destroyPool(pool: RegularPool | NotePool): void {
   for (const it of pool.items) {
     if (it instanceof Graphics) it.destroy();
     else it.root.destroy({ children: true });
@@ -324,6 +333,8 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     ground: hexToNumber(theme.ground),
     text: hexToNumber(theme.text),
     textDim: hexToNumber(theme.textDim),
+    onDon: hexToNumber(theme.onDon),
+    onKat: hexToNumber(theme.onKat),
   };
   const TYPE_COLOR = [C.don, C.kat] as const; // by kindIndex
 
@@ -400,10 +411,10 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   // ─── built geometry (rebuilt by setLayout)
   let noteCtx: NoteContexts | null = null;
   let staticContexts: GraphicsContext[] = [];
-  let donPool: RegularPool | null = null;
-  let katPool: RegularPool | null = null;
-  let bigDonPool: BigPool | null = null;
-  let bigKatPool: BigPool | null = null;
+  let donPool: NotePool | null = null;
+  let katPool: NotePool | null = null;
+  let bigDonPool: NotePool | null = null;
+  let bigKatPool: NotePool | null = null;
   let beatPool: RegularPool | null = null;
   let barPool: RegularPool | null = null;
   let noteMask: Graphics | null = null;
@@ -491,10 +502,10 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   function sizePools(): void {
     // Visible window in ms: spawn margin ahead + the longest tail behind.
     const windowMs = farMs + Math.max(missTravelMs, 300 + MOTION.hitVanish);
-    if (donPool) growRegular(donPool, noteLayer, maxInWindow(noteTimes.d, noteTimes.d.length, windowMs));
-    if (katPool) growRegular(katPool, noteLayer, maxInWindow(noteTimes.k, noteTimes.k.length, windowMs));
-    if (bigDonPool) growBig(bigDonPool, noteLayer, maxInWindow(noteTimes.bd, noteTimes.bd.length, windowMs));
-    if (bigKatPool) growBig(bigKatPool, noteLayer, maxInWindow(noteTimes.bk, noteTimes.bk.length, windowMs));
+    if (donPool) growNotes(donPool, noteLayer, maxInWindow(noteTimes.d, noteTimes.d.length, windowMs));
+    if (katPool) growNotes(katPool, noteLayer, maxInWindow(noteTimes.k, noteTimes.k.length, windowMs));
+    if (bigDonPool) growNotes(bigDonPool, noteLayer, maxInWindow(noteTimes.bd, noteTimes.bd.length, windowMs));
+    if (bigKatPool) growNotes(bigKatPool, noteLayer, maxInWindow(noteTimes.bk, noteTimes.bk.length, windowMs));
     const lineWindow = leadMs + nearLineMs;
     const maxLines = maxInWindow(lines.t, lines.count, lineWindow) + 1;
     if (beatPool) growRegular(beatPool, lineLayer, maxLines);
@@ -588,11 +599,11 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     noteLayer.mask = noteMask;
 
     // Note contexts and pools.
-    noteCtx = buildNoteContexts(d, D, C.ground);
-    donPool = makeRegularPool(noteCtx.don, noteLayer, 0);
-    katPool = makeRegularPool(noteCtx.kat, noteLayer, 0);
-    bigDonPool = makeBigPool(noteCtx.bigDonL, noteCtx.bigDonR, noteCtx.seam, noteLayer, 0);
-    bigKatPool = makeBigPool(noteCtx.bigKatL, noteCtx.bigKatR, noteCtx.seam, noteLayer, 0);
+    noteCtx = buildNoteContexts(d, D, C.onDon, C.onKat);
+    donPool = makeNotePool(noteCtx.don, null, noteCtx.donRim);
+    katPool = makeNotePool(noteCtx.kat, null, noteCtx.katRim);
+    bigDonPool = makeNotePool(noteCtx.bigDonL, noteCtx.bigDonR, noteCtx.bigDonRim);
+    bigKatPool = makeNotePool(noteCtx.bigKatL, noteCtx.bigKatR, noteCtx.bigKatRim);
 
     // Beat / bar lines.
     const beatCtx = lineContext(W, C.line);
@@ -707,44 +718,51 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   buildGeometry();
 
   // ─── per-frame placement
-  function placeRegular(pool: RegularPool, x: number, y: number, tint: number, alpha: number, scale = 1): void {
+  function placeLine(pool: RegularPool, y: number): void {
     let g = pool.items[pool.used];
     if (!g) {
       // Pool estimate was short: grow once, never per frame in steady state.
-      growRegular(pool, pool === beatPool || pool === barPool ? lineLayer : noteLayer, pool.items.length + 1);
+      growRegular(pool, lineLayer, pool.items.length + 1);
       g = pool.items[pool.used] as Graphics;
     }
     g.visible = true;
-    g.position.set(x, y);
-    g.scale.set(scale);
-    g.tint = tint;
-    g.alpha = alpha;
+    g.position.set(0, y);
     pool.used++;
   }
 
-  function placeBig(
-    pool: BigPool,
+  /**
+   * Show the next view of a note pool. `alpha` fades the whole note; `alphaL` /
+   * `alphaR` dim a big note's halves (a regular note's disc takes `alphaL`).
+   * `sx` / `sy` scale across the width axis and along travel.
+   */
+  function placeNoteView(
+    pool: NotePool,
     x: number,
     y: number,
     tint: number,
+    rimTint: number,
+    alpha: number,
     alphaL: number,
     alphaR: number,
-    alphaSeam: number,
-    scale = 1,
+    sx: number,
+    sy: number,
   ): void {
     let v = pool.items[pool.used];
     if (!v) {
-      growBig(pool, noteLayer, pool.items.length + 1);
-      v = pool.items[pool.used] as BigView;
+      growNotes(pool, noteLayer, pool.items.length + 1);
+      v = pool.items[pool.used] as NoteView;
     }
     v.root.visible = true;
     v.root.position.set(x, y);
-    v.root.scale.set(scale);
-    v.left.tint = tint;
-    v.right.tint = tint;
-    v.left.alpha = alphaL;
-    v.right.alpha = alphaR;
-    v.seam.alpha = alphaSeam;
+    v.root.scale.set(sx, sy);
+    v.root.alpha = alpha;
+    v.face.tint = tint;
+    v.face.alpha = alphaL;
+    if (v.right) {
+      v.right.tint = tint;
+      v.right.alpha = alphaR;
+    }
+    v.rim.tint = rimTint;
     pool.used++;
   }
 
@@ -754,10 +772,12 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     const v = engine.noteView(i);
     const ki = kindIndex(note.k);
     let tint = ki === 0 ? C.don : C.kat;
+    let rimTint = 0xffffff;
     let alpha = 1;
     let alphaL = 1;
     let alphaR = 1;
-    let scale = 1;
+    let sx = 1;
+    let sy = 1;
     let p: number;
 
     const status = v.status;
@@ -770,6 +790,7 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
       p = scrollP(note.t, songMs);
       if (p < -missTravelPx) return;
       tint = C.faint;
+      rimTint = C.faint;
     } else if (status === 'hit' && !v.awaitingPartner) {
       // Resolved hit: freeze where it was hit, push toward the gate, fade out.
       if (fx[i] !== FX_HIT) {
@@ -783,7 +804,7 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
       const k = elapsed < 0 ? 0 : elapsed / MOTION.hitVanish;
       p = scrollP(note.t, fxAt[i] as number) - SHAPE.hitPush * N * k;
       alpha = 1 - k;
-      scale = 1 + HIT_POP * k;
+      sx = sy = 1 + HIT_POP * k;
       if (fxJudge[i] === J_GREAT) tint = C.flash;
     } else {
       // Pending, or a big note whose first hand landed and whose partner is awaited.
@@ -798,15 +819,15 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
         if (hand === HAND_L) alphaL = LANDED_HALF_ALPHA;
         else if (hand === HAND_R) alphaR = LANDED_HALF_ALPHA;
       }
+      // Bounce on the beat: wider across, shorter along travel, so a stream never touches.
+      sx = 1 + bounce;
+      sy = 1 - SHAPE.noteSquash * bounce;
     }
 
     const y = -p;
     const x = W / 2;
-    if (!note.big) {
-      placeRegular((ki === 0 ? donPool : katPool) as RegularPool, x, y, tint, alpha, scale);
-    } else {
-      placeBig((ki === 0 ? bigDonPool : bigKatPool) as BigPool, x, y, tint, alpha * alphaL, alpha * alphaR, alpha, scale);
-    }
+    const pool = note.big ? (ki === 0 ? bigDonPool : bigKatPool) : ki === 0 ? donPool : katPool;
+    placeNoteView(pool as NotePool, x, y, tint, rimTint, alpha, alphaL, alphaR, sx, sy);
   }
 
   function placeLines(songMs: number): void {
@@ -819,7 +840,7 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
       const t = lines.t[i] as number;
       if (t > farT) break;
       const p = scrollP(t, songMs);
-      placeRegular(lines.bar[i] ? bar : beat, 0, -p, 0xffffff, 1);
+      placeLine(lines.bar[i] ? bar : beat, -p);
     }
     hideUnused(beat);
     hideUnused(bar);
@@ -935,25 +956,34 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
   /**
    * Beat pulse: the most recent beat line lifts the seam line toward `text`
    * (a bar fully, a beat by BEAT_PULSE_FRACTION) and a bar lifts the band
-   * background toward `raised`, both decaying over MOTION.beatPulse.
+   * background toward `raised`, both decaying over MOTION.beatPulse. Pending
+   * notes bounce with it (`bounce`, read by placeNote), eased out so the
+   * snap lands on the beat.
    */
-  function updateBeatPulse(songMs: number): void {
+  let pulse = 0;
+  let pulseBar = false;
+  let bounce = 0;
+  function measureBeatPulse(songMs: number): void {
+    pulse = 0;
+    pulseBar = false;
+    bounce = 0;
     if (reducedMotion) return;
     let i = lowerBound(lines.t, lines.count, songMs);
     if (i >= lines.count || (lines.t[i] as number) > songMs) i--;
-    let pulse = 0;
-    let bar = false;
-    if (i >= 0) {
-      const age = songMs - (lines.t[i] as number);
-      if (age < MOTION.beatPulse) {
-        pulse = 1 - age / MOTION.beatPulse;
-        bar = lines.bar[i] === 1;
-      }
-    }
-    const lineTint = lerpColor(C.textDim, C.text, bar ? pulse : pulse * BEAT_PULSE_FRACTION);
+    if (i < 0) return;
+    const age = songMs - (lines.t[i] as number);
+    if (age >= MOTION.beatPulse) return;
+    pulse = 1 - age / MOTION.beatPulse;
+    pulseBar = lines.bar[i] === 1;
+    bounce = SHAPE.noteBounce * pulse * pulse * (pulseBar ? 1 : SHAPE.noteBeatFraction);
+  }
+
+  function updateBeatPulse(): void {
+    if (reducedMotion) return;
+    const lineTint = lerpColor(C.textDim, C.text, pulseBar ? pulse : pulse * BEAT_PULSE_FRACTION);
     if (seamLine) seamLine.tint = lineTint;
     if (seamRing) seamRing.tint = lineTint;
-    if (bandBg) bandBg.tint = lerpColor(C.surface, C.raised, bar ? pulse * BAND_PULSE : 0);
+    if (bandBg) bandBg.tint = lerpColor(C.surface, C.raised, pulseBar ? pulse * BAND_PULSE : 0);
   }
 
   // ─── rolls and spinners
@@ -1178,6 +1208,7 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
     const notes = chart.notes;
     const first = Math.min(Math.max(engine.firstPending(), 0), notes.length);
     updatePendingCull(engine);
+    measureBeatPulse(songMs);
 
     // Judged notes still travelling (miss) or vanishing (hit).
     const tailMin = songMs - tailMs(engine);
@@ -1193,14 +1224,14 @@ export function createTrackRenderer(opts: TrackRendererOptions): TrackRenderer {
       if (n.t > farMax) break;
       placeNote(i, engine, songMs);
     }
-    hideUnused(donPool as RegularPool);
-    hideUnused(katPool as RegularPool);
-    hideUnused(bigDonPool as BigPool);
-    hideUnused(bigKatPool as BigPool);
+    hideUnused(donPool as NotePool);
+    hideUnused(katPool as NotePool);
+    hideUnused(bigDonPool as NotePool);
+    hideUnused(bigKatPool as NotePool);
 
     placeLines(songMs);
     placeSpans(songMs);
-    updateBeatPulse(songMs);
+    updateBeatPulse();
     updateSeam(songMs);
     updateGhosts(songMs);
     updateZones(songMs);

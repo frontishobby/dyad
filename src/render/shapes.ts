@@ -15,8 +15,10 @@
  * Shapes are filled WHITE and tinted by the renderer: tint = type colour
  * normally, `flash` on a Great, `textFaint` on a Miss. Pixi tint is
  * multiplicative, so a white base is the only way a shape can turn either
- * brighter or greyer. Each shape is built once per layout into a shared
- * GraphicsContext; pooled Graphics instances share it and never rebuild.
+ * brighter or greyer. The note rim is the exception: it carries its own ink
+ * and white and sits over the tinted face. Each shape is built once per
+ * layout into a shared GraphicsContext; pooled Graphics instances share it
+ * and never rebuild.
  */
 import { Graphics, GraphicsContext } from 'pixi.js';
 import type { Hand } from '../core/types.ts';
@@ -77,10 +79,17 @@ export function ringContext(d: number, stroke: number): GraphicsContext {
   return ctx;
 }
 
-/** 1 px seam line at the centre of a big note (height D), in the ground colour (not tinted). */
-export function seamContext(D: number, ground: number): GraphicsContext {
+/**
+ * Note rim (DESIGN §2): an `ink` outline on the disc's edge and a white ring
+ * just inside it, both within diameter d so the note's footprint stays d.
+ * Drawn in its own colours over the tinted face; the renderer tints it only
+ * to grey it out on a Miss.
+ */
+export function rimContext(d: number, inkWidth: number, lightWidth: number, ink: number): GraphicsContext {
+  const r = d / 2;
   const ctx = new GraphicsContext();
-  ctx.rect(-0.5, -D / 2, 1, D).fill(ground);
+  ctx.circle(0, 0, r - inkWidth / 2).stroke({ width: inkWidth, color: ink, alignment: 0.5 });
+  ctx.circle(0, 0, r - inkWidth - lightWidth / 2).stroke({ width: lightWidth, color: WHITE, alignment: 0.5 });
   return ctx;
 }
 
@@ -146,15 +155,22 @@ export interface NoteContexts {
   bigDonR: GraphicsContext;
   bigKatL: GraphicsContext;
   bigKatR: GraphicsContext;
-  seam: GraphicsContext;
+  donRim: GraphicsContext;
+  katRim: GraphicsContext;
+  bigDonRim: GraphicsContext;
+  bigKatRim: GraphicsContext;
 }
 
 /**
  * Build every note shape once for a track: regular discs of diameter d, big
- * half-discs of diameter D. Don and kat share a shape (the colour tells them
- * apart) but get their own contexts so the pools stay independent.
+ * half-discs of diameter D, and a rim for each in its type's ink (`onDon`,
+ * `onKat`). Rim strokes come from d for both sizes so every note has the same
+ * line weight. Don and kat share a face shape (the colour tells them apart)
+ * but get their own contexts so the pools stay independent.
  */
-export function buildNoteContexts(d: number, D: number, ground: number): NoteContexts {
+export function buildNoteContexts(d: number, D: number, onDon: number, onKat: number): NoteContexts {
+  const ink = d * SHAPE.rimInk;
+  const light = d * SHAPE.rimLight;
   return {
     don: circleContext(d),
     kat: circleContext(d),
@@ -162,16 +178,13 @@ export function buildNoteContexts(d: number, D: number, ground: number): NoteCon
     bigDonR: halfCircleContext(D, 'R'),
     bigKatL: halfCircleContext(D, 'L'),
     bigKatR: halfCircleContext(D, 'R'),
-    seam: seamContext(D, ground),
+    donRim: rimContext(d, ink, light, onDon),
+    katRim: rimContext(d, ink, light, onKat),
+    bigDonRim: rimContext(D, ink, light, onDon),
+    bigKatRim: rimContext(D, ink, light, onKat),
   };
 }
 
 export function destroyNoteContexts(c: NoteContexts): void {
-  c.don.destroy();
-  c.kat.destroy();
-  c.bigDonL.destroy();
-  c.bigDonR.destroy();
-  c.bigKatL.destroy();
-  c.bigKatR.destroy();
-  c.seam.destroy();
+  for (const ctx of Object.values(c)) ctx.destroy();
 }

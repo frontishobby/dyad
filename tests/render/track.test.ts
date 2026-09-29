@@ -54,11 +54,16 @@ function byLabel(root: Container, label: string): Container {
   return c as Container;
 }
 
-/** Visible pooled note objects in the note layer (regular Graphics or big Containers). */
+/** Visible pooled notes in the note layer: a Container of face (big: left, right), rim (big). */
 function visibleNotes(view: Container): Container[] {
   const world = byLabel(view, 'world');
   const noteLayer = world.children[4] as Container;
   return noteLayer.children.filter((c) => c.visible);
+}
+
+/** A note's tinted face: the disc, or a big note's left half. */
+function face(note: Container): Graphics {
+  return note.children[0] as Graphics;
 }
 
 function visibleLines(view: Container): Graphics[] {
@@ -109,14 +114,14 @@ describe('createTrackRenderer', () => {
     renderer.frame(250, engine);
     const vis = visibleNotes(renderer.view);
     expect(vis).toHaveLength(1);
-    const g = vis[0] as Graphics;
+    const g = vis[0] as Container;
     const p = ((1000 - 250) / leadMs) * layout.leadPx;
     expect(g.y).toBeCloseTo(-p, 9);
     expect(g.x).toBeCloseTo(layout.W / 2, 9);
-    expect(g.tint).toBe(hexToNumber(DARK.don));
+    expect(face(g).tint).toBe(hexToNumber(DARK.don));
     // At the seam.
     renderer.frame(1000, engine);
-    expect((visibleNotes(renderer.view)[0] as Graphics).y).toBeCloseTo(0, 9);
+    expect((visibleNotes(renderer.view)[0] as Container).y).toBeCloseTo(0, 9);
     // Screen-space check through the world transform: seam y in portrait.
     const world = byLabel(renderer.view, 'world');
     expect(world.y).toBeCloseTo(seamPosition(layout), 9);
@@ -139,8 +144,9 @@ describe('createTrackRenderer', () => {
     renderer.frame(1050, engine);
     let vis = visibleNotes(renderer.view);
     expect(vis).toHaveLength(1);
-    expect((vis[0] as Graphics).tint).toBe(hexToNumber(DARK.textFaint));
-    expect((vis[0] as Graphics).y).toBeCloseTo(((1050 - 1000) / leadMs) * layout.leadPx, 9);
+    expect(face(vis[0] as Container).tint).toBe(hexToNumber(DARK.textFaint));
+    expect((vis[0] as Container).children[1]!.tint).toBe(hexToNumber(DARK.textFaint)); // the rim greys too
+    expect((vis[0] as Container).y).toBeCloseTo(((1050 - 1000) / leadMs) * layout.leadPx, 9);
     // Just before the travel limit: still visible. Past it: gone.
     const travelMs = (SHAPE.missTravel * layout.N * leadMs) / layout.leadPx;
     renderer.frame(1000 + travelMs - 1, engine);
@@ -160,8 +166,8 @@ describe('createTrackRenderer', () => {
     renderer.frame(1000 + MOTION.hitVanish / 2, engine);
     const vis = visibleNotes(renderer.view);
     expect(vis).toHaveLength(1);
-    const g = vis[0] as Graphics;
-    expect(g.tint).toBe(hexToNumber(DARK.flash));
+    const g = vis[0] as Container;
+    expect(face(g).tint).toBe(hexToNumber(DARK.flash));
     expect(g.alpha).toBeCloseTo(0.5, 9);
     // Pushed toward the gate (past the seam = +y local) by half the push.
     expect(g.y).toBeCloseTo(SHAPE.hitPush * layout.N * 0.5, 9);
@@ -179,8 +185,8 @@ describe('createTrackRenderer', () => {
     engine.set(0, { status: 'hit', judgement: 'ok' });
     renderer.apply([{ type: 'note', index: 0, judgement: 'ok', deltaMs: 50, key: 'KR', big: false, strong: false }], 1050);
     renderer.frame(1060, engine);
-    const g = visibleNotes(renderer.view)[0] as Graphics;
-    expect(g.tint).toBe(hexToNumber(DARK.kat));
+    const g = visibleNotes(renderer.view)[0] as Container;
+    expect(face(g).tint).toBe(hexToNumber(DARK.kat));
     renderer.destroy();
 
     const rm = make('landscape', [{ t: 1000, k: 'k', big: false }], { reducedMotion: true });
@@ -197,7 +203,7 @@ describe('createTrackRenderer', () => {
     let vis = visibleNotes(renderer.view);
     expect(vis).toHaveLength(1);
     const big = vis[0] as Container;
-    expect(big.children).toHaveLength(3); // left, right, seam
+    expect(big.children).toHaveLength(3); // left, right, rim
     expect((big.children[0] as Graphics).alpha).toBe(1);
     expect((big.children[1] as Graphics).alpha).toBe(1);
 
@@ -379,9 +385,10 @@ describe('createTrackRenderer', () => {
     engine.set(0, { status: 'hit', judgement: 'ok' });
     renderer.apply([{ type: 'note', index: 0, judgement: 'ok', deltaMs: 0, key: 'DL', big: false, strong: false }], 1000);
     renderer.frame(1000, engine);
-    expect((visibleNotes(renderer.view)[0] as Graphics).scale.x).toBeCloseTo(1, 9);
+    expect(visibleNotes(renderer.view)[0]!.scale.x).toBeCloseTo(1, 9);
     renderer.frame(1000 + MOTION.hitVanish / 2, engine);
-    expect((visibleNotes(renderer.view)[0] as Graphics).scale.x).toBeCloseTo(1.1, 9);
+    expect(visibleNotes(renderer.view)[0]!.scale.x).toBeCloseTo(1.1, 9);
+    expect(visibleNotes(renderer.view)[0]!.scale.y).toBeCloseTo(1.1, 9);
     renderer.destroy();
   });
 
@@ -491,6 +498,28 @@ describe('createTrackRenderer', () => {
     const rmLine = ((byLabel(rm.renderer.view, 'world').children[3] as Container).children[0]) as Graphics;
     rm.renderer.frame(2000, rm.engine);
     expect(rmLine.tint).toBe(dim);
+    rm.renderer.destroy();
+  });
+
+  it('pending notes bounce on the beat: wider across, shorter along travel, bar more than beat; still under reduced motion', () => {
+    // 120 BPM, 4/4: bar at 2000, beat at 2500.
+    const notes: Chart['notes'] = [{ t: 2600, k: 'd', big: false }, { t: 2700, k: 'k', big: true }];
+    const { renderer, engine } = make('landscape', notes);
+    renderer.frame(2000, engine);
+    const [regular, big] = visibleNotes(renderer.view) as [Container, Container];
+    expect(regular.scale.x).toBeCloseTo(1 + SHAPE.noteBounce, 9);
+    expect(regular.scale.y).toBeCloseTo(1 - SHAPE.noteSquash * SHAPE.noteBounce, 9);
+    expect(big.scale.x).toBeCloseTo(1 + SHAPE.noteBounce, 9);
+    renderer.frame(2500, engine);
+    expect(regular.scale.x).toBeCloseTo(1 + SHAPE.noteBounce * SHAPE.noteBeatFraction, 9);
+    renderer.frame(2500 + MOTION.beatPulse, engine);
+    expect(regular.scale.x).toBeCloseTo(1, 9);
+    expect(regular.scale.y).toBeCloseTo(1, 9);
+    renderer.destroy();
+
+    const rm = make('landscape', notes, { reducedMotion: true });
+    rm.renderer.frame(2000, rm.engine);
+    for (const n of visibleNotes(rm.renderer.view)) expect(n.scale.x).toBeCloseTo(1, 9);
     rm.renderer.destroy();
   });
 

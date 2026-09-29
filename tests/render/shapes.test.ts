@@ -10,8 +10,8 @@ import {
   destroyNoteContexts,
   halfCircleContext,
   noteDiameter,
+  rimContext,
   ringContext,
-  seamContext,
   silhouetteContext,
 } from '../../src/render/shapes.ts';
 
@@ -41,7 +41,7 @@ describe('Pixi contexts (headless)', () => {
     ctx.destroy();
   });
 
-  it('half discs tile the big diameter with a 1 px seam at the centre', () => {
+  it('half discs tile the big diameter', () => {
     const D = 108;
     const l = halfCircleContext(D, 'L');
     const r = halfCircleContext(D, 'R');
@@ -51,10 +51,7 @@ describe('Pixi contexts (headless)', () => {
     expect(r.bounds.maxX).toBeCloseTo(D / 2, 1);
     expect(l.bounds.minY).toBeCloseTo(-D / 2, 1);
     expect(l.bounds.maxY).toBeCloseTo(D / 2, 1);
-    const seam = seamContext(D, 0x12131f);
-    expect(seam.bounds.width).toBeCloseTo(1, 6);
-    expect(seam.bounds.height).toBeCloseTo(D, 6);
-    for (const c of [l, r, seam]) c.destroy();
+    for (const c of [l, r]) c.destroy();
   });
 
   it('rings and bursts are strokes around the diameter, at least 2 px wide', () => {
@@ -68,14 +65,25 @@ describe('Pixi contexts (headless)', () => {
   });
 
   it('the note bundle: regular discs of d, big halves of D, all centred', () => {
-    const c = buildNoteContexts(70, 108, 0x12131f);
+    const c = buildNoteContexts(70, 108, 0x241600, 0x0a0e33);
     expect(c.don.bounds.width).toBeCloseTo(70, 6);
     expect(c.kat.bounds.width).toBeCloseTo(70, 6);
     expect(c.don).not.toBe(c.kat); // separate contexts, same shape
     expect(c.bigDonL.bounds.minX).toBeCloseTo(-54, 1);
     expect(c.bigKatR.bounds.maxX).toBeCloseTo(54, 1);
-    expect(c.seam.bounds.height).toBeCloseTo(108, 6);
+    // Rims stay inside their disc: the footprint is still d / D.
+    expect(c.donRim.bounds.width).toBeCloseTo(70, 6);
+    expect(c.bigKatRim.bounds.width).toBeCloseTo(108, 6);
+    expect(c.donRim).not.toBe(c.katRim);
     destroyNoteContexts(c);
+  });
+
+  it('a rim is an ink outline on the edge and a white ring inside it, within the diameter', () => {
+    const d = 100;
+    const rim = rimContext(d, 5, 7, 0x241600);
+    expect(rim.bounds.minX).toBeCloseTo(-d / 2, 6);
+    expect(rim.bounds.width).toBeCloseTo(d, 6);
+    rim.destroy();
   });
 
   it('silhouettes are centred discs; bricks start at the origin', () => {
