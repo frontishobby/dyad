@@ -10,6 +10,8 @@
   import ShapeIcon from './components/ShapeIcon.svelte';
   import { keyHand, keyKind } from '../core/types.ts';
 
+  const SOURCE_URL = 'https://github.com/frontishobby/dyad';
+
   /** Rows in hand order, outer to outer: left kat, left don, right don, right kat. */
   const KEY_ROWS: readonly Key[] = ['KL', 'DL', 'DR', 'KR'];
 
@@ -285,6 +287,7 @@
   <footer class="foot">
     <Button id="settings-reset" onclick={() => settings.reset()}>{t().settings.reset}</Button>
     <Button id="open-credits" onclick={() => screen.go({ name: 'credits' })}>{t().settings.credits}</Button>
+    <a id="source-code" class="source" href={SOURCE_URL} target="_blank" rel="noopener noreferrer">Source Code</a>
   </footer>
 </main>
 
@@ -407,9 +410,27 @@
 
   .foot {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 12px;
     padding-top: 8px;
     border-top: 1px solid var(--line);
+  }
+
+  .source {
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    margin-inline-start: auto;
+    font-size: 14px;
+    color: var(--kat-ink);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .source:focus-visible {
+    outline: 2px solid var(--kat);
+    outline-offset: 2px;
   }
 
   @media (max-width: 479px) {
