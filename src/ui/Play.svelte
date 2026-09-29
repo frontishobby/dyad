@@ -628,7 +628,7 @@
           layout={view.layout}
           durationMs={view.durationMs}
           {jacketUrl}
-          onpause={orientation === 'portrait' ? () => void pause() : undefined}
+          onpause={() => void pause()}
         />
         {#if orientation === 'landscape'}
           <div class="key-guide" class:shown={keyGuide} aria-hidden={!keyGuide}>

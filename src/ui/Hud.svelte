@@ -34,7 +34,7 @@
     durationMs: number;
     /** Small jacket (DESIGN §4). Omitted: no image slot. */
     jacketUrl?: string;
-    /** When given, a pause button is shown at the top-right (portrait). */
+    /** When given, a pause button is shown: beside the numbers in portrait, between score and combo in landscape. */
     onpause?: () => void;
     /**
      * Draw the judgement word here. Off by default: the track renderer draws
@@ -146,13 +146,18 @@
     </div>
     <div class="numbers">
       <div class="score">{scoreText}</div>
+      {#if onpause && !portrait}
+        <button class="pause" type="button" aria-label={t().play.pause} onclick={onpause}>
+          <i></i><i></i>
+        </button>
+      {/if}
       {#key pulseKey}
         <div class="combo" class:pulse={pulseKey > 0 && !milestone} class:milestone={pulseKey > 0 && milestone}>
           {combo > 0 ? combo : ''}
         </div>
       {/key}
     </div>
-    {#if onpause}
+    {#if onpause && portrait}
       <button class="pause" type="button" aria-label={t().play.pause} onclick={onpause}>
         <i></i><i></i>
       </button>
@@ -334,6 +339,10 @@
     cursor: pointer;
     pointer-events: auto;
     touch-action: manipulation;
+  }
+  /* Landscape: right-aligned in the numbers column, right under the score. */
+  .numbers .pause {
+    margin: 0 0 0 auto;
   }
   .pause i {
     display: block;
