@@ -1,5 +1,7 @@
 <script lang="ts">
   import { formatHiSpeed, formatPercent, prettyKeyCode } from '../app/format.ts';
+  import { t } from '../app/i18n.svelte.ts';
+  import { LOCALES, LOCALE_NAMES, LOCALE_TAGS } from '../app/locale.ts';
   import { screen } from '../app/screen.svelte.ts';
   import { SETTINGS_RANGE, isKeyCode } from '../app/settings-io.ts';
   import { settings } from '../app/settings.svelte.ts';
@@ -12,12 +14,9 @@
   const KEY_ROWS: readonly Key[] = ['KL', 'DL', 'DR', 'KR'];
 
   /** Guidance is shape-based (DESIGN §2): the icon says which note, the text which hand. */
-  const HAND_LABELS: Record<Key, string> = {
-    KL: '왼손',
-    KR: '오른손',
-    DL: '왼손',
-    DR: '오른손',
-  };
+  function handLabel(key: Key): string {
+    return keyHand(key) === 'L' ? t().settings.leftHand : t().settings.rightHand;
+  }
 
   const s = $derived(settings.value);
 
@@ -71,29 +70,29 @@
 
 <main class="screen">
   <header class="screen-head">
-    <h1>설정</h1>
-    <Button id="settings-back" variant="primary" onclick={() => screen.go({ name: 'title' })}>돌아가기</Button>
+    <h1>{t().settings.title}</h1>
+    <Button id="settings-back" variant="primary" onclick={() => screen.go({ name: 'title' })}>{t().common.back}</Button>
   </header>
 
   <section aria-labelledby="h-keys">
-    <h2 id="h-keys">키</h2>
+    <h2 id="h-keys">{t().settings.keys}</h2>
     <div class="rows">
       {#each KEY_ROWS as key (key)}
         <div class="row">
           <span class="label key-label" id="label-{key}">
             <ShapeIcon kind={keyKind(key)} width={36} />
-            <span>{HAND_LABELS[key]}</span>
-            <span class="sr">{keyKind(key) === 'k' ? '꺾인 노트' : '곧은 노트'}, {keyHand(key) === 'L' ? '왼손' : '오른손'}</span>
+            <span>{handLabel(key)}</span>
+            <span class="sr">{keyKind(key) === 'k' ? t().settings.angledNote : t().settings.straightNote}, {handLabel(key)}</span>
           </span>
           <div class="control">
             <kbd class="key" class:listening={listening === key} aria-labelledby="label-{key}">
               {listening === key ? '…' : prettyKeyCode(s.bindings[key])}
             </kbd>
             <Button id="bind-{key}" size="sm" onclick={() => toggleListen(key)}>
-              {listening === key ? '취소' : '변경'}
+              {listening === key ? t().settings.cancel : t().settings.change}
             </Button>
             {#if listening === key}
-              <span class="dim caption" aria-live="polite">키를 누르세요. Esc로 취소합니다.</span>
+              <span class="dim caption" aria-live="polite">{t().settings.pressKey}</span>
             {/if}
           </div>
         </div>
@@ -102,10 +101,10 @@
   </section>
 
   <section aria-labelledby="h-play">
-    <h2 id="h-play">플레이</h2>
+    <h2 id="h-play">{t().settings.play}</h2>
     <div class="rows">
       <div class="row">
-        <label class="label" for="hispeed">하이스피드</label>
+        <label class="label" for="hispeed">{t().settings.hiSpeed}</label>
         <div class="control">
           <input
             id="hispeed"
@@ -129,7 +128,7 @@
             max={SETTINGS_RANGE.hiSpeed.max}
             step={SETTINGS_RANGE.hiSpeed.step}
             value={s.hiSpeed}
-            aria-label="하이스피드 값"
+            aria-label={t().settings.hiSpeedValue}
             onchange={(e) => commit(e, 'hiSpeed')}
           />
           <span class="dim caption">{formatHiSpeed(s.hiSpeed)}</span>
@@ -139,11 +138,11 @@
   </section>
 
   <section aria-labelledby="h-timing">
-    <h2 id="h-timing">타이밍</h2>
-    <p class="dim caption">메트로놈에 맞춰 재거나, 직접 숫자를 고칠 수 있습니다.</p>
+    <h2 id="h-timing">{t().settings.timing}</h2>
+    <p class="dim caption">{t().settings.timingHint}</p>
     <div class="rows">
       <div class="row">
-        <label class="label" for="audio-offset">오디오 오프셋</label>
+        <label class="label" for="audio-offset">{t().settings.audioOffset}</label>
         <div class="control">
           <input
             id="audio-offset"
@@ -156,11 +155,11 @@
             value={s.audioOffset}
             onchange={(e) => commit(e, 'audioOffset')}
           />
-          <span class="dim caption">ms, 화면 대비 소리</span>
+          <span class="dim caption">{t().settings.audioOffsetHint}</span>
         </div>
       </div>
       <div class="row">
-        <label class="label" for="input-offset">입력 오프셋</label>
+        <label class="label" for="input-offset">{t().settings.inputOffset}</label>
         <div class="control">
           <input
             id="input-offset"
@@ -173,14 +172,14 @@
             value={s.inputOffset}
             onchange={(e) => commit(e, 'inputOffset')}
           />
-          <span class="dim caption">ms, 입력 지연</span>
+          <span class="dim caption">{t().settings.inputOffsetHint}</span>
         </div>
       </div>
       <div class="row">
         <span class="label"></span>
         <div class="control">
           <Button id="recalibrate" onclick={() => screen.go({ name: 'calibrate', returnTo: 'settings' })}>
-            오프셋 보정
+            {t().settings.calibrate}
           </Button>
         </div>
       </div>
@@ -188,10 +187,31 @@
   </section>
 
   <section aria-labelledby="h-look">
-    <h2 id="h-look">화면과 소리</h2>
+    <h2 id="h-look">{t().settings.look}</h2>
     <div class="rows">
       <div class="row">
-        <span class="label" id="label-theme">테마</span>
+        <span class="label" id="label-locale">{t().settings.language}</span>
+        <div class="control">
+          <div class="segment" role="radiogroup" aria-labelledby="label-locale">
+            {#each LOCALES as locale (locale)}
+              <label>
+                <input
+                  id="locale-{locale}"
+                  type="radio"
+                  name="locale"
+                  value={locale}
+                  checked={s.locale === locale}
+                  onchange={() => settings.update({ locale })}
+                />
+                <span lang={LOCALE_TAGS[locale]}>{LOCALE_NAMES[locale]}</span>
+              </label>
+            {/each}
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <span class="label" id="label-theme">{t().settings.theme}</span>
         <div class="control">
           <div class="segment" role="radiogroup" aria-labelledby="label-theme">
             <label>
@@ -203,7 +223,7 @@
                 checked={s.theme === 'dark'}
                 onchange={() => settings.update({ theme: 'dark' })}
               />
-              <span>어둡게</span>
+              <span>{t().settings.dark}</span>
             </label>
             <label>
               <input
@@ -214,14 +234,14 @@
                 checked={s.theme === 'light'}
                 onchange={() => settings.update({ theme: 'light' })}
               />
-              <span>밝게</span>
+              <span>{t().settings.light}</span>
             </label>
           </div>
         </div>
       </div>
 
       <div class="row">
-        <label class="label" for="master-volume">마스터 볼륨</label>
+        <label class="label" for="master-volume">{t().settings.masterVolume}</label>
         <div class="control">
           <input
             id="master-volume"
@@ -241,7 +261,7 @@
       </div>
 
       <div class="row">
-        <label class="label" for="hit-volume">타격음</label>
+        <label class="label" for="hit-volume">{t().settings.hitVolume}</label>
         <div class="control">
           <input
             id="hit-volume"
@@ -263,8 +283,8 @@
   </section>
 
   <footer class="foot">
-    <Button id="settings-reset" onclick={() => settings.reset()}>기본값으로</Button>
-    <Button id="open-credits" onclick={() => screen.go({ name: 'credits' })}>크레딧</Button>
+    <Button id="settings-reset" onclick={() => settings.reset()}>{t().settings.reset}</Button>
+    <Button id="open-credits" onclick={() => screen.go({ name: 'credits' })}>{t().settings.credits}</Button>
   </footer>
 </main>
 
@@ -372,6 +392,7 @@
     align-items: center;
     padding: 0 16px;
     color: var(--text-dim);
+    white-space: nowrap;
   }
 
   .segment input:checked + span {
@@ -396,6 +417,10 @@
       grid-template-columns: 1fr;
       gap: 4px;
       padding-block: 4px;
+    }
+    /* Four language names fit a 360 px phone only with tighter padding. */
+    .segment span {
+      padding: 0 12px;
     }
   }
 </style>

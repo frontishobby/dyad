@@ -75,6 +75,7 @@ export function formatBpm([min, max]: readonly [number, number]): string {
   return min === max ? f(min) : `${f(min)}–${f(max)}`;
 }
 
+/** Names read the same in every UI language (key caps are labelled in English). */
 const CODE_NAMES: Readonly<Record<string, string>> = {
   Space: 'Space',
   Enter: 'Enter',
@@ -82,14 +83,14 @@ const CODE_NAMES: Readonly<Record<string, string>> = {
   Backspace: 'Backspace',
   Escape: 'Esc',
   CapsLock: 'Caps lock',
-  ShiftLeft: 'Shift (왼쪽)',
-  ShiftRight: 'Shift (오른쪽)',
-  ControlLeft: 'Ctrl (왼쪽)',
-  ControlRight: 'Ctrl (오른쪽)',
-  AltLeft: 'Alt (왼쪽)',
-  AltRight: 'Alt (오른쪽)',
-  MetaLeft: 'Meta (왼쪽)',
-  MetaRight: 'Meta (오른쪽)',
+  ShiftLeft: 'L Shift',
+  ShiftRight: 'R Shift',
+  ControlLeft: 'L Ctrl',
+  ControlRight: 'R Ctrl',
+  AltLeft: 'L Alt',
+  AltRight: 'R Alt',
+  MetaLeft: 'L Meta',
+  MetaRight: 'R Meta',
   ArrowUp: '↑',
   ArrowDown: '↓',
   ArrowLeft: '←',

@@ -1,28 +1,29 @@
 <script lang="ts">
   import { MUSIC, TOOLS } from '../app/credits.ts';
+  import { t } from '../app/i18n.svelte.ts';
   import { screen } from '../app/screen.svelte.ts';
   import Button from './components/Button.svelte';
 </script>
 
 <main class="screen">
   <header class="screen-head">
-    <h1>크레딧</h1>
-    <Button id="credits-back" variant="primary" onclick={() => screen.go({ name: 'settings' })}>돌아가기</Button>
+    <h1>{t().credits.title}</h1>
+    <Button id="credits-back" variant="primary" onclick={() => screen.go({ name: 'settings' })}>{t().common.back}</Button>
   </header>
 
   <section aria-labelledby="h-music">
-    <h2 id="h-music">음악</h2>
+    <h2 id="h-music">{t().credits.music}</h2>
     <ul class="list">
       {#each MUSIC as song (song.title)}
         <li>
           <p><span class="name">{song.title}</span> <span class="dim">{song.artist}</span></p>
           {#if song.source}
             <p class="dim caption">
-              원곡
+              {t().credits.original}
               <a href={song.source.url} target="_blank" rel="noopener noreferrer">"{song.source.title}"</a>
               by {song.artist},
               <a href={song.source.license.url} target="_blank" rel="noopener noreferrer">{song.source.license.name}</a>
-              {#if song.source.changes}· {song.source.changes}{/if}
+              {#if song.source.changes}· {t().credits.changes[song.source.changes]}{/if}
             </p>
           {/if}
         </li>
@@ -31,12 +32,12 @@
   </section>
 
   <section aria-labelledby="h-art">
-    <h2 id="h-art">채보와 자켓</h2>
-    <p class="dim caption">모든 채보는 AI(Mapperatorinator)가 생성했고, 자켓 일러스트도 AI로 만들었습니다.</p>
+    <h2 id="h-art">{t().credits.art}</h2>
+    <p class="dim caption">{t().credits.artNote}</p>
   </section>
 
   <section aria-labelledby="h-tools">
-    <h2 id="h-tools">사용한 도구</h2>
+    <h2 id="h-tools">{t().credits.tools}</h2>
     <ul class="list">
       {#each TOOLS as tool (tool.name)}
         <li>
@@ -44,7 +45,7 @@
             <a class="name" href={tool.url} target="_blank" rel="noopener noreferrer">{tool.name}</a>
             <span class="dim">{tool.by}</span>
           </p>
-          <p class="dim caption">{tool.role}</p>
+          <p class="dim caption">{t().credits.roles[tool.role]}</p>
         </li>
       {/each}
     </ul>

@@ -5,6 +5,7 @@
    * its $state through frame() / noteEvents(); nothing here reads the clock.
    */
   import { onDestroy } from 'svelte';
+  import { t } from '../app/i18n.svelte.ts';
   import type { EngineEvent, EngineState, Judgement } from '../core/types.ts';
   import type { Layout } from '../render/types.ts';
   import { MOTION, TYPE } from '../design/tokens.ts';
@@ -152,26 +153,26 @@
       {/key}
     </div>
     {#if onpause}
-      <button class="pause" type="button" aria-label="일시정지" onclick={onpause}>
+      <button class="pause" type="button" aria-label={t().play.pause} onclick={onpause}>
         <i></i><i></i>
       </button>
     {/if}
   </div>
   {#if !portrait}
     <div class="errors" class:beside-jacket={!!jacketUrl && !jacketFailed} aria-hidden="true">
-      <span class="side">빠름</span>
+      <span class="side">{t().hud.early}</span>
       <div class="bar" style:width="{ERROR_BAR_W}px" style:--great-inset={greatInset}>
         <i class="zone ok"></i>
         <i class="zone great"></i>
         <i class="centre"></i>
-        {#each ticks as t (t.id)}
-          <i class="tick" class:great={t.great} style:left="{t.x * 100}%"></i>
+        {#each ticks as tick (tick.id)}
+          <i class="tick" class:great={tick.great} style:left="{tick.x * 100}%"></i>
         {/each}
         {#if meanX !== null}
           <i class="mean" style:transform="translateX({meanX * ERROR_BAR_W}px)"></i>
         {/if}
       </div>
-      <span class="side">느림</span>
+      <span class="side">{t().hud.late}</span>
     </div>
   {/if}
   <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="1" aria-valuenow={progress}>

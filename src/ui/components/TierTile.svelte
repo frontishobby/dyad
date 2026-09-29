@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tierLabel } from '../../app/format.ts';
+  import { t } from '../../app/i18n.svelte.ts';
   import type { Tier } from '../../app/types.ts';
 
   /**
@@ -24,7 +25,7 @@
   } = $props();
 
   const label = $derived(tierLabel(tier));
-  const description = $derived(absent ? `${label}: 이 곡에는 없음` : `${label}, 레벨 ${level ?? '—'}`);
+  const description = $derived(absent ? t().tier.absent(label) : t().tier.level(label, level === null ? '—' : String(level)));
 </script>
 
 <button

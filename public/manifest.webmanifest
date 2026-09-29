@@ -10,7 +10,7 @@
   "orientation": "any",
   "background_color": "#07070C",
   "theme_color": "#07070C",
-  "lang": "ko",
+  "lang": "en",
   "categories": ["games", "music"],
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },

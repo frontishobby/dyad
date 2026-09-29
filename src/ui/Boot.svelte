@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getAudioContext, probeWebmOpus, resumeAudio } from '../audio/index.ts';
   import { screen } from '../app/screen.svelte.ts';
+  import { t } from '../app/i18n.svelte.ts';
   import Button from './components/Button.svelte';
   import ShapeIcon from './components/ShapeIcon.svelte';
 
@@ -49,15 +50,15 @@
 
   {#if phase === 'unsupported'}
     <div class="notice" role="alert">
-      <p>이 브라우저에서는 곡을 재생할 수 없습니다.</p>
-      <p class="dim">iOS 18.4 이상, 또는 최신 Chrome, Firefox, Edge로 업데이트한 뒤 다시 열어 주세요.</p>
+      <p>{t().boot.unsupported}</p>
+      <p class="dim">{t().boot.unsupportedHint}</p>
       <div class="actions">
-        <Button id="boot-retry" variant="primary" onclick={start}>다시 시도</Button>
+        <Button id="boot-retry" variant="primary" onclick={start}>{t().common.retry}</Button>
       </div>
     </div>
   {:else}
     <div class="actions">
-      <Button id="boot-start" variant="primary" onclick={start} disabled={phase === 'checking'}>시작</Button>
+      <Button id="boot-start" variant="primary" onclick={start} disabled={phase === 'checking'}>{t().common.start}</Button>
     </div>
   {/if}
 </main>

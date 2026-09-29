@@ -12,6 +12,7 @@
    */
   import { onMount } from 'svelte';
   import { settings } from '../app/settings.svelte.ts';
+  import { t } from '../app/i18n.svelte.ts';
   import { screen } from '../app/screen.svelte.ts';
   import { createHitSounds, getAudioContext, resumeAudio } from '../audio/index.ts';
   import type { HitSounds } from '../audio/types.ts';
@@ -215,53 +216,50 @@
 
 <main class="calibrate" style={typeVars}>
   <header>
-    <h1 class="display">보정</h1>
-    <p class="dim">{step} / 2 · {step === 1 ? '화면과 소리' : '입력'}</p>
+    <h1 class="display">{t().calibrate.title}</h1>
+    <p class="dim">{step} / 2 · {step === 1 ? t().calibrate.stepScreen : t().calibrate.stepInput}</p>
   </header>
 
   <div class="flash" class:on={flashing} aria-hidden="true"></div>
 
   {#if step === 1}
-    <p>
-      메트로놈 소리가 날 때 위 막대가 빛나도록 슬라이더를 맞추세요. 빛이 소리보다 먼저면 오른쪽으로, 늦으면
-      왼쪽으로.
-    </p>
+    <p>{t().calibrate.screenGuide}</p>
     {#if !running}
       <div class="actions">
-        <button class="btn primary" type="button" onclick={() => void begin()} disabled={starting}>시작</button>
-        <button class="btn" type="button" onclick={skip}>건너뛰기</button>
+        <button class="btn primary" type="button" onclick={() => void begin()} disabled={starting}>{t().common.start}</button>
+        <button class="btn" type="button" onclick={skip}>{t().common.skip}</button>
       </div>
     {:else}
       <div class="slider">
-        <button class="btn small" type="button" onclick={() => nudge(-1)} aria-label="1 ms 줄이기">−</button>
+        <button class="btn small" type="button" onclick={() => nudge(-1)} aria-label={t().calibrate.less}>−</button>
         <input
           type="range"
           min={OFFSET_MIN}
           max={OFFSET_MAX}
           step="1"
           bind:value={audioOffset}
-          aria-label="화면 오프셋"
+          aria-label={t().calibrate.screenOffset}
         />
-        <button class="btn small" type="button" onclick={() => nudge(1)} aria-label="1 ms 늘리기">+</button>
+        <button class="btn small" type="button" onclick={() => nudge(1)} aria-label={t().calibrate.more}>+</button>
         <output class="num">{formatMs(audioOffset)}</output>
       </div>
       <div class="actions">
-        <button class="btn primary" type="button" onclick={next}>다음</button>
-        <button class="btn" type="button" onclick={skip}>건너뛰기</button>
+        <button class="btn primary" type="button" onclick={next}>{t().calibrate.next}</button>
+        <button class="btn" type="button" onclick={skip}>{t().common.skip}</button>
       </div>
     {/if}
   {:else}
-    <p>박자에 맞춰 아무 키나 {TAP_TARGET}번 누르세요. 터치는 아래 패드를 두드리세요.</p>
+    <p>{t().calibrate.tapGuide(TAP_TARGET)}</p>
     <div class="pad" class:down={tapDown} bind:this={pad}>
-      <span class="faint">여기를 두드리세요</span>
+      <span class="faint">{t().calibrate.tapHere}</span>
     </div>
     <div class="readout">
       <div>
-        <span class="dim">입력</span>
+        <span class="dim">{t().calibrate.taps}</span>
         <span class="num big">{recent.length} / {TAP_TARGET}</span>
       </div>
       <div>
-        <span class="dim">입력 오프셋</span>
+        <span class="dim">{t().calibrate.inputOffset}</span>
         <span class="num big">{Number.isNaN(inputOffset) ? '—' : formatMs(inputOffset)}</span>
       </div>
     </div>
@@ -275,9 +273,9 @@
       {/if}
     </div>
     <div class="actions">
-      <button class="btn primary" type="button" onclick={save} disabled={!canSave}>저장</button>
-      <button class="btn" type="button" onclick={resetTaps} disabled={taps.length === 0}>다시</button>
-      <button class="btn" type="button" onclick={skip}>건너뛰기</button>
+      <button class="btn primary" type="button" onclick={save} disabled={!canSave}>{t().calibrate.save}</button>
+      <button class="btn" type="button" onclick={resetTaps} disabled={taps.length === 0}>{t().calibrate.redo}</button>
+      <button class="btn" type="button" onclick={skip}>{t().common.skip}</button>
     </div>
   {/if}
 

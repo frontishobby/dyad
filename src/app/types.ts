@@ -2,6 +2,7 @@
  * App-level types: settings and the song index (PLAN §4, §9).
  */
 import type { KeyBindings } from '../input/types.ts';
+import { DEFAULT_LOCALE, type Locale } from './locale.ts';
 
 export interface Settings {
   bindings: KeyBindings;
@@ -12,6 +13,8 @@ export interface Settings {
   /** Multiplier on scroll speed; 1 = default lead time. */
   hiSpeed: number;
   theme: 'dark' | 'light';
+  /** UI language. Absent from storage on a first visit: detected from the browser then. */
+  locale: Locale;
   /** Scales every sound: song, previews, hit sounds, metronome. */
   masterVolume: number;
   hitSoundVolume: number;
@@ -25,6 +28,7 @@ export const DEFAULT_SETTINGS: Settings = {
   inputOffset: 0,
   hiSpeed: 1,
   theme: 'dark',
+  locale: DEFAULT_LOCALE,
   masterVolume: 0.5,
   hitSoundVolume: 0.8,
   calibrated: false,

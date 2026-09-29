@@ -3,6 +3,7 @@
   import { cubicOut } from 'svelte/easing';
   import { Tween } from 'svelte/motion';
   import { clearBadge, formatAccuracy, formatScore } from '../app/format.ts';
+  import { t } from '../app/i18n.svelte.ts';
   import { screen } from '../app/screen.svelte.ts';
   import { loadChart, songUrl } from '../app/songs.ts';
   import type { SongChartRef, SongMeta } from '../app/types.ts';
@@ -49,7 +50,7 @@
 
   /** The record to compare against, when it is not this very play. */
   const otherBest = $derived(best && best.createdAt !== result.createdAt ? best : null);
-  const otherLabel = $derived(isNewBest ? '이전 기록' : '최고 기록');
+  const otherLabel = $derived(isNewBest ? t().result.previousBest : t().result.best);
 
   /**
    * The reveal (DESIGN §5): the score counts up from 0, the bars grow into
@@ -109,25 +110,25 @@
     </header>
 
     <div class="body">
-      <section class="score-block" aria-label="점수">
+      <section class="score-block" aria-label={t().result.score}>
         <div class="score-line">
-          <span aria-label="점수 {formatScore(result.score)}">
+          <span aria-label={t().result.scoreValue(formatScore(result.score))}>
             <Score value={Math.round(countUp.current)} size="score" />
           </span>
           {#if isNewBest}
-            <span class="new-best">신기록</span>
+            <span class="new-best">{t().result.newBest}</span>
           {/if}
           {#if badge}
             <span class="badge" class:all-great={badge === 'ALL GREAT'}>{badge}</span>
           {/if}
         </div>
-        <p class="accuracy display rise" style:--i="1" aria-label="정확도 {accuracy}">{accuracy}</p>
+        <p class="accuracy display rise" style:--i="1" aria-label={t().result.accuracyValue(accuracy)}>{accuracy}</p>
         {#if otherBest}
           <p class="dim caption rise" style:--i="2">{otherLabel} {formatScore(otherBest.score)}</p>
         {/if}
       </section>
 
-      <section class="bars" aria-label="판정 분포">
+      <section class="bars" aria-label={t().result.breakdown}>
         {#each bars as bar, i (bar.label)}
           <div class="bar">
             <span class="bar-label {bar.tone}">{bar.label}</span>
@@ -141,29 +142,29 @@
 
       <dl class="stats">
         <div class="rise" style:--i="3">
-          <dt class="dim caption">최대 콤보</dt>
+          <dt class="dim caption">{t().result.maxCombo}</dt>
           <dd class="combo">{result.maxCombo}</dd>
         </div>
         <div class="rise" style:--i="4">
-          <dt class="dim caption">드럼롤</dt>
+          <dt class="dim caption">{t().result.drumroll}</dt>
           <dd>{result.rollTicks}</dd>
         </div>
         <div class="rise" style:--i="5">
-          <dt class="dim caption">스피너</dt>
+          <dt class="dim caption">{t().result.spinner}</dt>
           <dd>{result.spinnerTicks}</dd>
         </div>
       </dl>
 
       <footer class="actions rise" style:--i="6">
-        <Button id="result-retry" variant="primary" onclick={() => screen.go({ name: 'play', song, chart })}>다시</Button>
-        <Button id="result-select" onclick={() => screen.go({ name: 'title' })}>곡 선택</Button>
+        <Button id="result-retry" variant="primary" onclick={() => screen.go({ name: 'play', song, chart })}>{t().result.retry}</Button>
+        <Button id="result-select" onclick={() => screen.go({ name: 'title' })}>{t().result.songSelect}</Button>
       </footer>
     </div>
 
-    <section class="graph rise" style:--i="4" aria-label="곡 진행에 따른 정확도">
+    <section class="graph rise" style:--i="4" aria-label={t().result.graph}>
       <div class="graph-head">
-        <span class="dim caption">정확도</span>
-        <span class="dim caption">곡 진행</span>
+        <span class="dim caption">{t().result.accuracy}</span>
+        <span class="dim caption">{t().result.progress}</span>
       </div>
       <div class="plot" class:ready={timeline !== null && timeline.length > 0}>
         <svg viewBox="0 0 {GRAPH_W} {GRAPH_H}" preserveAspectRatio="none" aria-hidden="true">
@@ -180,9 +181,9 @@
         <span class="axis top">100%</span>
         <span class="axis mid">50%</span>
         {#if timeline === null}
-          <span class="dim caption state">불러오는 중…</span>
+          <span class="dim caption state">{t().common.loading}</span>
         {:else if timeline.length === 0}
-          <span class="dim caption state">그래프를 만들 수 없습니다</span>
+          <span class="dim caption state">{t().result.graphFailed}</span>
         {/if}
       </div>
     </section>

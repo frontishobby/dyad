@@ -76,6 +76,13 @@ describe('validateSettings', () => {
     expect(validateSettings({ theme: 'light' }).theme).toBe('light');
     expect(validateSettings({ theme: 'DARK' }).theme).toBe('dark');
   });
+
+  it('accepts only supported locales, English by default', () => {
+    expect(DEFAULT_SETTINGS.locale).toBe('en');
+    expect(validateSettings({ locale: 'ja' }).locale).toBe('ja');
+    expect(validateSettings({ locale: 'fr' }).locale).toBe('en');
+    expect(validateSettings({ locale: 'ko-KR' }).locale).toBe('en');
+  });
 });
 
 describe('toBindings', () => {
@@ -153,6 +160,22 @@ describe('parseSettings / loadSettings / saveSettings', () => {
     expect(s.bindings).toEqual({ KL: 'KeyZ', KR: 'Comma', DL: 'KeyD', DR: 'KeyM' });
     expect(s.theme).toBe('dark');
     expect('legacy' in s).toBe(false);
+  });
+
+  it('takes the language from the browser until one is stored', () => {
+    const storage = createMemoryStorage();
+    expect(loadSettings(storage, ['ko-KR', 'en-US']).locale).toBe('ko');
+    expect(loadSettings(null, ['zh-CN']).locale).toBe('zh');
+    expect(loadSettings(storage, ['fr-FR']).locale).toBe('en');
+
+    // Settings saved before the language setting existed: still the browser's.
+    storage.setItem(SETTINGS_KEY, JSON.stringify({ hiSpeed: 2 }));
+    expect(loadSettings(storage, ['ja-JP']).locale).toBe('ja');
+    expect(loadSettings(storage, ['ja-JP']).hiSpeed).toBe(2);
+
+    // A stored choice wins over the browser.
+    storage.setItem(SETTINGS_KEY, JSON.stringify({ locale: 'en' }));
+    expect(loadSettings(storage, ['ko-KR']).locale).toBe('en');
   });
 
   it('survives a storage that throws', () => {

@@ -9,6 +9,7 @@
    */
   import { onMount } from 'svelte';
   import { setMasterVolume } from './audio/context.ts';
+  import './app/i18n.svelte.ts';
   import { settings } from './app/settings.svelte.ts';
   import { screen } from './app/screen.svelte.ts';
   import { theme } from './app/theme.svelte.ts';

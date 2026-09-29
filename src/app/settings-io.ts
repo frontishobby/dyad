@@ -8,6 +8,7 @@
  */
 import { KEYS, type Key } from '../core/types.ts';
 import type { KeyBindings } from '../input/types.ts';
+import { detectLocale, isLocale } from './locale.ts';
 import { DEFAULT_SETTINGS, type Settings } from './types.ts';
 
 export const SETTINGS_KEY = 'dyad:settings';
@@ -54,6 +55,10 @@ function toBoolean(v: unknown, fallback: boolean): boolean {
 
 function toTheme(v: unknown, fallback: Settings['theme']): Settings['theme'] {
   return v === 'dark' || v === 'light' ? v : fallback;
+}
+
+function toLocale(v: unknown, fallback: Settings['locale']): Settings['locale'] {
+  return isLocale(v) ? v : fallback;
 }
 
 export function isKeyCode(v: unknown): v is string {
@@ -123,6 +128,7 @@ export function validateSettings(raw: unknown, base: Settings = DEFAULT_SETTINGS
     inputOffset: toOffsetMs(raw.inputOffset, base.inputOffset),
     hiSpeed: toHiSpeed(raw.hiSpeed, base.hiSpeed),
     theme: toTheme(raw.theme, base.theme),
+    locale: toLocale(raw.locale, base.locale),
     masterVolume: toVolume(raw.masterVolume, base.masterVolume),
     hitSoundVolume: toVolume(raw.hitSoundVolume, base.hitSoundVolume),
     calibrated: toBoolean(raw.calibrated, base.calibrated),
@@ -134,22 +140,31 @@ export function mergeSettings(base: Settings, patch: Partial<Settings>): Setting
   return validateSettings(patch, base);
 }
 
-/** Parse stored JSON; corrupt or missing text yields the defaults. */
-export function parseSettings(json: string | null | undefined): Settings {
-  if (typeof json !== 'string' || json === '') return cloneSettings(DEFAULT_SETTINGS);
+/** Parse stored JSON over `base`; corrupt or missing text yields `base`. */
+export function parseSettings(json: string | null | undefined, base: Settings = DEFAULT_SETTINGS): Settings {
+  if (typeof json !== 'string' || json === '') return cloneSettings(base);
   try {
-    return validateSettings(JSON.parse(json));
+    return validateSettings(JSON.parse(json), base);
   } catch {
-    return cloneSettings(DEFAULT_SETTINGS);
+    return cloneSettings(base);
   }
 }
 
-export function loadSettings(storage: Pick<Storage, 'getItem'> | null | undefined): Settings {
-  if (!storage) return cloneSettings(DEFAULT_SETTINGS);
+/**
+ * Stored settings over the defaults. Until a language is stored, it follows
+ * `languages` (the browser's preference list), so a first visit opens in the
+ * player's language when we have it and in English otherwise.
+ */
+export function loadSettings(
+  storage: Pick<Storage, 'getItem'> | null | undefined,
+  languages: readonly string[] = [],
+): Settings {
+  const base: Settings = { ...cloneSettings(DEFAULT_SETTINGS), locale: detectLocale(languages) };
+  if (!storage) return base;
   try {
-    return parseSettings(storage.getItem(SETTINGS_KEY));
+    return parseSettings(storage.getItem(SETTINGS_KEY), base);
   } catch {
-    return cloneSettings(DEFAULT_SETTINGS);
+    return base;
   }
 }
 

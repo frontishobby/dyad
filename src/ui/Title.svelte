@@ -28,6 +28,7 @@
   } from '../app/carousel.ts';
   import { clearBadge, formatBpm, formatDuration } from '../app/format.ts';
   import { screen } from '../app/screen.svelte.ts';
+  import { t } from '../app/i18n.svelte.ts';
   import { loadSongIndex, songUrl } from '../app/songs.ts';
   import { TIERS, type SongChartRef, type SongMeta, type Tier } from '../app/types.ts';
   import type { PlayResult } from '../core/types.ts';
@@ -273,8 +274,8 @@
     play(true);
   }
 
-  function tileFor(t: Tier): SongChartRef | undefined {
-    return song?.charts.find((c) => c.tier === t);
+  function tileFor(want: Tier): SongChartRef | undefined {
+    return song?.charts.find((c) => c.tier === want);
   }
 </script>
 
@@ -292,19 +293,19 @@
     {#if status === 'ready' && songs.length > 0}
       <span class="count dim caption" aria-live="polite">{index + 1} / {songs.length}</span>
     {/if}
-    <Button id="title-settings" onclick={() => screen.go({ name: 'settings' })}>설정</Button>
+    <Button id="title-settings" onclick={() => screen.go({ name: 'settings' })}>{t().title.settings}</Button>
   </header>
 
   {#if status === 'loading'}
-    <p class="dim state" aria-live="polite">곡 목록을 불러오는 중…</p>
+    <p class="dim state" aria-live="polite">{t().title.loadingSongs}</p>
   {:else if status === 'error'}
     <div class="state" role="alert">
-      <p>곡 목록을 불러오지 못했습니다.</p>
-      <p class="dim">연결을 확인한 뒤 다시 시도해 주세요.</p>
-      <div><Button id="title-retry" variant="primary" onclick={load}>다시 시도</Button></div>
+      <p>{t().title.loadFailed}</p>
+      <p class="dim">{t().title.loadFailedHint}</p>
+      <div><Button id="title-retry" variant="primary" onclick={load}>{t().common.retry}</Button></div>
     </div>
   {:else if songs.length === 0}
-    <p class="dim state">아직 곡이 없습니다.</p>
+    <p class="dim state">{t().title.noSongs}</p>
   {:else if song && chart}
     <div class="carousel-room" bind:clientHeight={carouselRoomH}>
     <div
@@ -315,7 +316,7 @@
       onpointerup={onPointerUp}
       onpointercancel={onPointerCancel}
       role="listbox"
-      aria-label="곡"
+      aria-label={t().title.songs}
       tabindex="-1"
     >
       {#each songs as entry, i (entry.id)}
@@ -333,7 +334,7 @@
           tabindex={Math.abs(shortest(i - index, songs.length)) > 2 ? -1 : 0}
           role="option"
           aria-selected={i === index}
-          aria-label={i === index ? `${entry.title} 시작` : `${entry.title} 선택`}
+          aria-label={i === index ? t().title.playSong(entry.title) : t().title.selectSong(entry.title)}
           onclick={() => onJacketClick(i)}
           ondblclick={() => onJacketDoubleClick(i)}
         >
@@ -357,29 +358,29 @@
           <dd class="num">{formatBpm(song.bpm)}</dd>
         </div>
         <div>
-          <dt class="dim caption">길이</dt>
+          <dt class="dim caption">{t().title.length}</dt>
           <dd class="num">{formatDuration(song.durationMs)}</dd>
         </div>
       </dl>
 
       <div class="tiers-column">
-        <div class="tiers" role="group" aria-label="난이도">
-          {#each TIERS as t (t)}
-            {@const available = tileFor(t)}
+        <div class="tiers" role="group" aria-label={t().title.difficulty}>
+          {#each TIERS as tileTier (tileTier)}
+            {@const available = tileFor(tileTier)}
             <TierTile
-              tier={t}
+              tier={tileTier}
               level={available?.level ?? null}
               on={available !== undefined && available.hash === chart.hash}
               absent={available === undefined}
-              onclick={available ? () => (tier = t) : undefined}
+              onclick={available ? () => (tier = tileTier) : undefined}
             />
           {/each}
         </div>
-        <p class="dim caption notes num">{chart.notes} notes</p>
+        <p class="dim caption notes num">{t().title.notes(chart.notes)}</p>
       </div>
 
       <div class="record">
-        <span class="dim caption">{best ? '최고 기록' : '기록 없음'}</span>
+        <span class="dim caption">{best ? t().title.best : t().title.noRecord}</span>
         <div class="record-line">
           <Score value={best?.score ?? null} size="combo" />
           {#if best}
@@ -394,11 +395,11 @@
 
     <footer class="hints dim caption">
       {#if finePointer}
-        <span><kbd>←</kbd><kbd>→</kbd> 곡</span>
-        <span><kbd>↑</kbd><kbd>↓</kbd> 난이도</span>
-        <span><kbd>Enter</kbd> 시작</span>
+        <span><kbd>←</kbd><kbd>→</kbd> {t().title.hintSong}</span>
+        <span><kbd>↑</kbd><kbd>↓</kbd> {t().title.hintTier}</span>
+        <span><kbd>Enter</kbd> {t().title.hintStart}</span>
       {:else}
-        <span>옆으로 넘겨 곡을 고르고, 가운데 자켓을 눌러 시작합니다</span>
+        <span>{t().title.hintSwipe}</span>
       {/if}
     </footer>
   {/if}

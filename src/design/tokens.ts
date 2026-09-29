@@ -123,7 +123,16 @@ export const MOTION = {
 /** Type scale (DESIGN §3), logical px. */
 export const TYPE = {
   display: "'Unbounded Variable', 'Unbounded', 'Arial Black', sans-serif",
-  body: "'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+  /**
+   * Body stack per UI language. Plex KR draws kana and hanzi in Korean forms,
+   * so Japanese and Chinese go straight to the system's own CJK faces.
+   */
+  bodyFor: {
+    en: "'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+    ko: "'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+    ja: "'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Meiryo', 'Noto Sans JP', sans-serif",
+    zh: "'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif",
+  },
   size: { keyLabel: 12, caption: 14, body: 16, title: 20, combo: 28, judgement: 40, score: 64, hero: 96 },
 } as const;
 
@@ -213,13 +222,12 @@ const CSS_VARS: Record<keyof Omit<Theme, 'name' | 'tintAmount'>, string> = {
   flash: '--flash',
 };
 
-/** Inject a theme as CSS custom properties on <html>. */
+/** Inject a theme as CSS custom properties on <html>. --font-body follows the language instead (i18n.svelte.ts). */
 export function applyTheme(theme: Theme, root: HTMLElement = document.documentElement): void {
   for (const key of Object.keys(CSS_VARS) as (keyof typeof CSS_VARS)[]) {
     root.style.setProperty(CSS_VARS[key], theme[key]);
   }
   root.style.setProperty('--font-display', TYPE.display);
-  root.style.setProperty('--font-body', TYPE.body);
   root.dataset.theme = theme.name;
   root.style.colorScheme = theme.name;
 }

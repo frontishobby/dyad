@@ -2,7 +2,10 @@
  * Credits screen content. Third-party music must name the author, the title
  * it was published under, the licence and the source, and say what we changed
  * (CC-BY / OGA-BY §4). Keep this in step with songs-src/ when a song is added.
+ * Prose lives in the message files (credits.changes / credits.roles); this
+ * holds only the keys.
  */
+import type { Messages } from './i18n/en.ts';
 
 export interface License {
   name: string;
@@ -24,8 +27,8 @@ export interface MusicCredit {
     title: string;
     url: string;
     license: License;
-    /** What we changed, in Korean. */
-    changes?: string;
+    /** What we changed. */
+    changes?: keyof Messages['credits']['changes'];
   };
 }
 
@@ -40,7 +43,7 @@ export const MUSIC: readonly MusicCredit[] = [
       title: 'Lucid Trigger',
       url: 'https://opengameart.org/content/lucid-trigger',
       license: LICENSES.cc0,
-      changes: '끝부분을 잘라 짧게 페이드',
+      changes: 'trimmedEnd',
     },
   },
   { title: 'Malice', artist: 'Original' },
@@ -51,7 +54,7 @@ export const MUSIC: readonly MusicCredit[] = [
       title: 'Electronic Dance Uplifting Trailer',
       url: 'https://opengameart.org/content/electronic-dance-uplifting-trailer',
       license: LICENSES.ogaBy3,
-      changes: '제목 변경',
+      changes: 'retitled',
     },
   },
   { title: 'Tailwind', artist: 'Original' },
@@ -61,8 +64,8 @@ export interface ToolCredit {
   name: string;
   by: string;
   url: string;
-  /** What it does here, in Korean. */
-  role: string;
+  /** What it does here. */
+  role: keyof Messages['credits']['roles'];
 }
 
 export const TOOLS: readonly ToolCredit[] = [
@@ -70,10 +73,10 @@ export const TOOLS: readonly ToolCredit[] = [
     name: 'Mapperatorinator',
     by: 'OliBomby',
     url: 'https://github.com/OliBomby/Mapperatorinator',
-    role: '모든 채보 생성 (AI)',
+    role: 'charts',
   },
-  { name: 'rosu-pp', by: 'MaxOhn', url: 'https://github.com/MaxOhn/rosu-pp', role: '난이도 계산' },
-  { name: 'PixiJS', by: 'PixiJS', url: 'https://pixijs.com', role: '플레이 화면 렌더링' },
-  { name: 'Svelte', by: 'Svelte', url: 'https://svelte.dev', role: 'UI' },
-  { name: 'Vite', by: 'VoidZero', url: 'https://vite.dev', role: '빌드' },
+  { name: 'rosu-pp', by: 'MaxOhn', url: 'https://github.com/MaxOhn/rosu-pp', role: 'difficulty' },
+  { name: 'PixiJS', by: 'PixiJS', url: 'https://pixijs.com', role: 'render' },
+  { name: 'Svelte', by: 'Svelte', url: 'https://svelte.dev', role: 'ui' },
+  { name: 'Vite', by: 'VoidZero', url: 'https://vite.dev', role: 'build' },
 ];

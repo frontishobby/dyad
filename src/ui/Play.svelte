@@ -14,6 +14,7 @@
   import { fade } from 'svelte/transition';
   import type { SongChartRef, SongMeta } from '../app/types.ts';
   import { settings } from '../app/settings.svelte.ts';
+  import { t } from '../app/i18n.svelte.ts';
   import { screen } from '../app/screen.svelte.ts';
   import { theme } from '../app/theme.svelte.ts';
   import { loadChart, songUrl } from '../app/songs.ts';
@@ -643,14 +644,14 @@
         {/if}
         {#if phase === 'ready'}
           <div class="veil" out:fade={{ duration: reducedMotion ? 0 : 220 }}>
-            <button class="btn primary" type="button" onclick={() => void startFromGesture()}>시작</button>
+            <button class="btn primary" type="button" onclick={() => void startFromGesture()}>{t().common.start}</button>
           </div>
         {:else if phase === 'paused'}
-          <div class="veil" role="dialog" aria-label="일시정지" in:fade={{ duration: reducedMotion ? 0 : 140 }}>
-            <h2 class="display">일시정지</h2>
+          <div class="veil" role="dialog" aria-label={t().play.paused} in:fade={{ duration: reducedMotion ? 0 : 140 }}>
+            <h2 class="display">{t().play.paused}</h2>
             <div class="actions">
-              <button class="btn primary" type="button" onclick={resume}>재개</button>
-              <button class="btn" type="button" onclick={exit}>나가기</button>
+              <button class="btn primary" type="button" onclick={resume}>{t().play.resume}</button>
+              <button class="btn" type="button" onclick={exit}>{t().play.quit}</button>
             </div>
           </div>
         {:else if phase === 'countin'}
@@ -665,12 +666,12 @@
   </div>
 
   {#if phase === 'loading'}
-    <p class="line">불러오는 중…</p>
+    <p class="line">{t().common.loading}</p>
   {:else if phase === 'error'}
     <div class="line stack">
-      <p>불러오지 못했습니다</p>
+      <p>{t().play.loadFailed}</p>
       <p class="dim">{errorMessage}</p>
-      <button class="btn" type="button" onclick={exit}>돌아가기</button>
+      <button class="btn" type="button" onclick={exit}>{t().common.back}</button>
     </div>
   {/if}
 </div>

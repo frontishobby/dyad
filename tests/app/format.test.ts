@@ -90,7 +90,7 @@ describe('prettyKeyCode', () => {
     expect(prettyKeyCode('ArrowLeft')).toBe('←');
     expect(prettyKeyCode('Semicolon')).toBe(';');
     expect(prettyKeyCode('F3')).toBe('F3');
-    expect(prettyKeyCode('ShiftLeft')).toBe('Shift (왼쪽)');
+    expect(prettyKeyCode('ShiftLeft')).toBe('L Shift');
   });
 
   it('sentence-cases unknown camel-case codes', () => {
