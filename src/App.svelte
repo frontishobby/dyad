@@ -155,4 +155,15 @@
   .frame > :global(*) {
     min-height: 100%;
   }
+  /* Both scrollers still scroll, but never show a bar: a screen that exactly fills
+     them overflows by the screen-in rise for 260 ms, which flashed one in and out,
+     and a tall settings screen should not carry a desktop gutter. */
+  .frame,
+  .shell {
+    scrollbar-width: none;
+  }
+  .frame::-webkit-scrollbar,
+  .shell::-webkit-scrollbar {
+    display: none;
+  }
 </style>
