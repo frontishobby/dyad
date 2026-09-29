@@ -30,13 +30,14 @@
   const current = $derived(screen.current);
 
   let frameEl = $state<HTMLDivElement>();
+  let shellEl = $state<HTMLDivElement>();
 
   // Each screen mounts fresh, but the scroller does not: opening credits from the
   // bottom of settings would land scrolled past its header.
   $effect(() => {
     void current;
     frameEl?.scrollTo(0, 0);
-    window.scrollTo(0, 0);
+    shellEl?.scrollTo(0, 0);
   });
 
   // Only stores the value (and retunes live master gains); never creates the AudioContext.
@@ -105,7 +106,7 @@
     {@render screens()}
   </div>
 {:else}
-  <div class="shell" data-theme={theme.value.name}>
+  <div bind:this={shellEl} class="shell" data-theme={theme.value.name}>
     {@render screens()}
   </div>
 {/if}
@@ -124,12 +125,16 @@
   }
 
   /* Portrait: a column as tall as the viewport whose one screen stretches to fill it
-     (a percentage min-height would not resolve against #app's min-height). */
+     (a percentage min-height would not resolve against #app's min-height). The shell
+     is the scroller: if the page scrolled instead, a tall screen would run past the
+     shell's ground into the void behind it. */
   .shell {
     display: flex;
     flex-direction: column;
     height: 100vh;
     height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     /* Installed on a phone the page runs under the status bar and the home
        indicator (viewport-fit=cover): keep every screen inside the safe area.
        The play screen handles its own insets. */
@@ -138,7 +143,7 @@
     background: var(--ground);
   }
   /* Screens fill the shell (100 % resolves against its definite height); a taller
-     one (settings, result) overflows it and the page scrolls. Screens carry
+     one (settings, result) overflows it and the shell scrolls. Screens carry
      margin-inline: auto for max-width centring, which in a flex column stops
      them stretching sideways, so the width is explicit. */
   .shell > :global(*) {
