@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#07070C" />
-    <title>DYAD</title>
+    <title>DYAD — Two-colour rhythm game in the browser</title>
     <meta name="description" content="A two-colour rhythm game in the browser. Amber or periwinkle, on the beat. Plays osu!taiko charts." />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -24,13 +24,52 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="DYAD wordmark beside amber and periwinkle notes flowing into a ring" />
     <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="ko_KR" />
+    <meta property="og:locale:alternate" content="ja_JP" />
+    <meta property="og:locale:alternate" content="zh_CN" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="DYAD" />
     <meta name="twitter:description" content="A two-colour rhythm game in the browser. Amber or periwinkle, on the beat." />
     <meta name="twitter:image" content="https://dyad.duckdns.org/og.png" />
+    <meta name="twitter:image:alt" content="DYAD wordmark beside amber and periwinkle notes flowing into a ring" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "DYAD",
+        "url": "https://dyad.duckdns.org/",
+        "image": "https://dyad.duckdns.org/og.png",
+        "description": "A two-colour rhythm game in the browser. Amber or periwinkle, on the beat. Plays osu!taiko charts.",
+        "genre": "Rhythm",
+        "gamePlatform": "Web browser",
+        "applicationCategory": "Game",
+        "operatingSystem": "Any",
+        "playMode": "SinglePlayer",
+        "inLanguage": ["en", "ko", "ja", "zh-Hans"],
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": { "@type": "Person", "name": "frontishobby", "url": "https://github.com/frontishobby" },
+        "codeRepository": "https://github.com/frontishobby/dyad"
+      }
+    </script>
+    <!-- Paints before the bundle loads, so the static intro below sits on the app's void instead of white. -->
+    <style>
+      html, body { margin: 0; background: #07070c; }
+      .seo { max-width: 32rem; margin: 0 auto; padding: 4rem 1rem; color: #8a8aa0; font: 15px/1.6 system-ui, sans-serif; }
+      .seo h1 { margin: 0 0 0.5rem; color: #efeef8; font-size: 1.5rem; letter-spacing: 0.08em; }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <!-- Static intro for crawlers that don't run JS (and for no-JS visitors). main.ts clears it before mounting. -->
+    <div id="app">
+      <main class="seo">
+        <h1>DYAD</h1>
+        <p>A two-colour rhythm game in the browser. Notes come in amber or periwinkle: hit the matching colour on the beat, with either hand. Big notes take both hands.</p>
+        <p>Plays osu!taiko charts, with a built-in song list from easy to hard. Works on desktop with a keyboard and on phones with touch, and installs as an offline app.</p>
+        <p>Available in English, 한국어, 日本語 and 简体中文.</p>
+        <noscript><p>DYAD needs JavaScript to run.</p></noscript>
+      </main>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
